@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 	"gorm.io/gorm"
 )
 
@@ -28,22 +30,25 @@ type TaskApp struct {
 
 	db *gorm.DB
 
-	hdr  fyne.Canvas
-	ftr  fyne.Canvas
-	fly  fyne.Canvas
-	main fyne.Canvas
+	hdr  fyne.CanvasObject
+	ftr  fyne.CanvasObject
+	fly  fyne.CanvasObject
+	main fyne.CanvasObject
 
 	root *fyne.Container
 }
 
-func newTaskApp(db *gorm.DB) *TaskApp {
+func newTaskApp(ctx context.Context, db *gorm.DB) *TaskApp {
+	_, cancel := context.WithCancel(ctx)
 	ta := TaskApp{
-		db: db,
+		db:   db,
+		ftr:  widget.NewButton("Quit", func() { cancel() }),
+		main: NewHomeView().Content(),
 	}
 
 	ta.root = container.NewBorder(
 		nil,
-		nil,
+		ta.ftr,
 		nil,
 		nil,
 	)

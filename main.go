@@ -51,6 +51,7 @@ func main() {
 	}
 	log = slog.New(slog.NewTextHandler(os.Stdout, logOpts))
 
+	// spin up debug server
 	go func() {
 		if err := http.ListenAndServe("127.0.0.1:6060", nil); err != nil {
 			log.Error(err.Error())
@@ -66,13 +67,14 @@ func main() {
 
 	a := app.New()
 	logAppLifecycle(a)
-	w := a.NewWindow("IT488 Team 1")
+	w := a.NewWindow("TODO Today")
 	w.SetOnClosed(func() { cancel() })
 
-	taskApp := newTaskApp(db)
+	taskApp := newTaskApp(ctx, db)
 	w.Resize(fyne.Size{Height: 700, Width: 300})
 	w.SetContent(taskApp.Root())
 
+	// if context is cancelled, close app.
 	go func() {
 		<-ctx.Done()
 		w.Close()

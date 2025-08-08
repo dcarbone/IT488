@@ -57,7 +57,7 @@ func openDB(dbFile string, logDebug bool) (*gorm.DB, error) {
 	conf := &gorm.Config{
 		Logger: newGormLogger(logDebug),
 	}
-	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s:?_pragma=foreign_keys(1)", dbFile)), conf)
+	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s?_pragma=foreign_keys(1)", dbFile)), conf)
 	if err != nil {
 		return nil, err
 	}
