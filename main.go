@@ -12,24 +12,26 @@ import (
 	"os/signal"
 	"syscall"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 )
 
 var (
-	logDebug bool
-	log      *slog.Logger
+	log *slog.Logger
 )
 
 func main() {
 	var (
-		err error
+		logDebug bool
+		dbFile   string
+		err      error
 	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	flags := flag.NewFlagSet("it488", flag.ContinueOnError)
-	flags.StringVar(&dbFile, "db-file", "it488_group1.db", "Local path to sqlite database file")
+	flags.StringVar(&dbFile, "db-file", "it488_team1.db", "Local path to sqlite database file")
 	flags.BoolVar(&logDebug, "debug", false, "Enable debug logging")
 
 	if err = flags.Parse(os.Args[1:]); err != nil {
@@ -50,20 +52,31 @@ func main() {
 	log = slog.New(slog.NewTextHandler(os.Stdout, logOpts))
 
 	go func() {
-		if err := http.ListenAndServe(":6060", nil); err != nil {
+		if err := http.ListenAndServe("127.0.0.1:6060", nil); err != nil {
 			log.Error(err.Error())
 			os.Exit(1)
 		}
 	}()
 
-	db, err := openDB()
+	db, err := openDB(dbFile, logDebug)
 	if err != nil {
 		log.Error("Error opening database", "err", err)
 		os.Exit(1)
 	}
 
 	a := app.New()
-	logLifecycle(a)
-	w := a.NewWindow("Daniel Carbone IT481")
+	logAppLifecycle(a)
+	w := a.NewWindow("IT488 Team 1")
 	w.SetOnClosed(func() { cancel() })
+
+	taskApp := newTaskApp(db)
+	w.Resize(fyne.Size{Height: 700, Width: 300})
+	w.SetContent(taskApp.Root())
+
+	go func() {
+		<-ctx.Done()
+		w.Close()
+	}()
+
+	w.ShowAndRun()
 }

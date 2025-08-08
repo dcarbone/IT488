@@ -11,12 +11,16 @@ import (
 	glogger "gorm.io/gorm/logger"
 )
 
-var (
-	dbFile string
-)
-
 type gormLogger struct {
 	logMode glogger.LogLevel
+}
+
+func newGormLogger(logDebug bool) *gormLogger {
+	gl := gormLogger{}
+	if !logDebug {
+		gl.logMode = glogger.Info
+	}
+	return &gl
 }
 
 func (gl gormLogger) LogMode(level glogger.LogLevel) glogger.Interface {
@@ -47,11 +51,11 @@ func (gl gormLogger) Trace(_ context.Context, begin time.Time, fc func() (sql st
 	log.Debug("Query trace", "begin", begin, "sql", sql, "rows_affected", af, "err", err)
 }
 
-func openDB() (*gorm.DB, error) {
+func openDB(dbFile string, logDebug bool) (*gorm.DB, error) {
 	log.Debug("Opening sqlite db...", "db", dbFile)
 
 	conf := &gorm.Config{
-		Logger: gormLogger{},
+		Logger: newGormLogger(logDebug),
 	}
 	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s:?_pragma=foreign_keys(1)", dbFile)), conf)
 	if err != nil {
@@ -61,10 +65,22 @@ func openDB() (*gorm.DB, error) {
 	log.Debug("Applying migrations...")
 
 	if err = db.AutoMigrate(&TaskList{}, &Task{}); err != nil {
+		defer tryCloseDB(db)
 		return nil, fmt.Errorf("error applying migrations: %w", err)
 	}
 
 	return db, nil
+}
+
+func tryCloseDB(db *gorm.DB) {
+	if db == nil {
+		return
+	}
+	sdb, err := db.DB()
+	if err != nil {
+		return
+	}
+	_ = sdb.Close()
 }
 
 type TaskStatus string
@@ -85,18 +101,19 @@ func (ct TaskStatus) Value() (driver.Value, error) {
 	return string(ct), nil
 }
 
-type Task struct {
-	gorm.Model
-	Label       string `gorm:"not null"`
-	Description string
-	Status      TaskStatus `gorm:"type:enum('todo','in progress','completed','skip');default:todo;type:task_status"`
-	Priority    uint       `gorm:"type:autoIncrement;uniqueIndex;not null"`
-
-	TaskListID TaskList
-}
-
 type TaskList struct {
 	gorm.Model
 	Label string `gorm:"not null"`
 	Tasks []Task `gorm:"constraint:OnDelete:CASCADE"`
+}
+
+type Task struct {
+	gorm.Model
+	Label       string `gorm:"not null"`
+	Description string
+	Status      TaskStatus `gorm:"type:enum('todo','in progress','completed','skip');default:todo;type:TaskStatus"`
+	Priority    uint       `gorm:"type:increment;uniqueIndex;not null"`
+
+	TaskListID int
+	TaskList   *TaskList
 }
