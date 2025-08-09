@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -30,39 +31,50 @@ type TaskApp struct {
 
 	db *gorm.DB
 
-	hdr     fyne.CanvasObject
-	ftr     fyne.CanvasObject
-	fly     fyne.CanvasObject
-	content []fyne.CanvasObject
-
-	root *fyne.Container
-	body *fyne.Container
+	container *fyne.Container
 }
 
 func newTaskApp(fyneApp fyne.App, db *gorm.DB) *TaskApp {
 	ta := TaskApp{
-		db:  db,
-		ftr: widget.NewButton("Quit", func() { fyneApp.Quit() }),
+		db: db,
 	}
 
-	hv := NewHomeView()
-	hv.Foreground()
+	logo, err := GetFullSizeLogoPNG()
+	if err != nil {
+		panic(fmt.Sprintf("error reading logo: %v", err))
+	}
 
-	ta.body = container.NewBorder(
-		nil,
-		ta.ftr,
-		nil,
-		nil,
-		hv.Content(),
-	)
-	ta.root = container.NewStack(
+	fyneApp.Settings().SetTheme(NewTheme())
+
+	logoImg := canvas.NewImageFromImage(logo)
+	logoImg.FillMode = canvas.ImageFillOriginal
+
+	ta.container = container.NewStack(
 		canvas.NewRectangle(ThemeBackgroundColor()),
-		ta.body,
+		container.NewBorder(
+			nil,
+			widget.NewButton("Quit", func() { fyneApp.Quit() }),
+			nil,
+			nil,
+			container.NewCenter(
+				container.NewVBox(
+					logoImg,
+					widget.NewButton("Today's List", func() {
+
+					}),
+					widget.NewButton("Create List", func() {
+
+					}),
+				),
+			),
+		),
 	)
 
 	return &ta
 }
 
-func (ta *TaskApp) Root() *fyne.Container {
-	return ta.root
+func (ta *TaskApp) Container() *fyne.Container {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	return ta.container
 }

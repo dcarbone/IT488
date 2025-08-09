@@ -67,12 +67,12 @@ func main() {
 
 	fyneApp := app.New()
 	logAppLifecycle(fyneApp)
-	mainWindow := fyneApp.NewWindow("TODO Today")
-	mainWindow.SetOnClosed(func() { cancel() })
 
 	taskApp := newTaskApp(fyneApp, db)
+
+	mainWindow := fyneApp.NewWindow("TODO Today")
 	mainWindow.Resize(fyne.Size{Height: 700, Width: 300})
-	mainWindow.SetContent(taskApp.Root())
+	mainWindow.SetContent(taskApp.Container())
 
 	// if context is cancelled, close app.
 	go func() {

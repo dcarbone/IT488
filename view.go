@@ -1,13 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"sync"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 )
 
 type ViewState int
@@ -99,59 +96,6 @@ func (v *baseView) background() bool {
 	return true
 }
 
-var _ View = (*HomeView)(nil)
-
-type HomeView struct {
-	*baseView
-	content *fyne.Container
-}
-
-func NewHomeView() *HomeView {
-	v := HomeView{}
-	v.baseView = newBaseView("Home", v.do)
-
-	return &v
-}
-
-func (h *HomeView) Content() fyne.CanvasObject {
-	return h.content
-}
-
-func (h *HomeView) do(act Action, closed bool) {
-
-}
-
-func (h *HomeView) Foreground() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	if !h.foreground() {
-		return
-	}
-
-	logo, err := GetFullSizeLogoPNG()
-	if err != nil {
-		panic(fmt.Sprintf("error reading logo: %v", err))
-	}
-
-	h.content = container.NewStack(
-		container.NewVBox(
-			canvas.NewImageFromImage(logo),
-		),
-	)
-}
-
-func (h *HomeView) Background() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	if !h.background() {
-		return
-	}
-
-	h.content.RemoveAll()
-}
-
 var _ View = (*TaskListsView)(nil)
 
 type TaskListsView struct {
@@ -165,7 +109,7 @@ func NewTaskListView() *TaskListsView {
 	return &v
 }
 
-func (t *TaskListsView) Content() fyne.CanvasObject {
+func (v *TaskListsView) Content() fyne.CanvasObject {
 	//TODO implement me
 	panic("implement me")
 }
@@ -174,12 +118,12 @@ func (v *TaskListsView) do(act Action, closed bool) {
 
 }
 
-func (t *TaskListsView) Foreground() {
+func (v *TaskListsView) Foreground() {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *TaskListsView) Background() {
+func (v *TaskListsView) Background() {
 	//TODO implement me
 	panic("implement me")
 }
