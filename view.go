@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"sync"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 )
 
 type ViewState int
@@ -100,18 +103,18 @@ var _ View = (*HomeView)(nil)
 
 type HomeView struct {
 	*baseView
-	content fyne.CanvasObject
+	content *fyne.Container
 }
 
 func NewHomeView() *HomeView {
 	v := HomeView{}
 	v.baseView = newBaseView("Home", v.do)
+
 	return &v
 }
 
 func (h *HomeView) Content() fyne.CanvasObject {
-	//TODO implement me
-	panic("implement me")
+	return h.content
 }
 
 func (h *HomeView) do(act Action, closed bool) {
@@ -119,13 +122,34 @@ func (h *HomeView) do(act Action, closed bool) {
 }
 
 func (h *HomeView) Foreground() {
-	//TODO implement me
-	panic("implement me")
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if !h.foreground() {
+		return
+	}
+
+	logo, err := GetFullSizeLogoPNG()
+	if err != nil {
+		panic(fmt.Sprintf("error reading logo: %v", err))
+	}
+
+	h.content = container.NewStack(
+		container.NewVBox(
+			canvas.NewImageFromImage(logo),
+		),
+	)
 }
 
 func (h *HomeView) Background() {
-	//TODO implement me
-	panic("implement me")
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if !h.background() {
+		return
+	}
+
+	h.content.RemoveAll()
 }
 
 var _ View = (*TaskListsView)(nil)
