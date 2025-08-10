@@ -37,7 +37,7 @@ jobs:
           gh release create \
             --generate-notes \
             --latest \
-            '${{ steps.version.outputs.date }}'
+            'v1-${{ steps.version.outputs.date }}'
 
   build-linux:
     needs:
