@@ -28,8 +28,12 @@ jobs:
         run: |
           echo "date=$(date "+%Y-%m-%d %H:%M:%S")" >> "$GITHUB_OUTPUT"
 
-      # language=sh
-      - run: |
+      - env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_PAGER: ''
+          GH_DISABLE_PROMPT: 'true'
+        # language=sh
+        run: |
           gh release create \
             --generate-notes \
             --latest \
