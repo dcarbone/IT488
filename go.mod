@@ -1,6 +1,8 @@
 module gitlab.com/purdue/IT488
 
-go 1.24
+go 1.23.0
+
+toolchain go1.23.12
 
 require (
 	fyne.io/fyne/v2 v2.6.2

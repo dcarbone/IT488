@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - 'main'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: 'Create Release'
+    runs-on: ubuntu-latest
+    outputs:
+      version: '${{ steps.version.outputs.date }}'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: version
+        # language=sh
+        run: |
+          echo "date=$(date "+%Y-%m-%d %H:%M:%S")" >> "$GITHUB_OUTPUT"
+
+      # language=sh
+      - run: |
+          gh release create \
+            --generate-notes \
+            --latest \
+            '${{ steps.version.outputs.date }}'
+
+  build-linux:
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      # language=sh
+      - run: |
+          go install github.com/fyne-io/fyne-cross@latest
+          fyne-cross linux -arch=amd64
+
+  build-windows:
+    needs:
+      - release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      # language=sh
+      - run: |
+          go install github.com/fyne-io/fyne-cross@latest
+          fyne-cross windows -arch=amd64,arm64
+
+  build-macos:
+    needs:
+      - release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      # language=sh
+      - run: |
+          go install github.com/fyne-io/fyne-cross@latest
+          fyne-cross macos -arch=arm64
