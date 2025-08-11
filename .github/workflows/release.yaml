@@ -94,4 +94,4 @@ jobs:
       # language=sh
       - run: |
           go install github.com/fyne-io/fyne-cross@latest
-          fyne-cross macos -arch=arm64
+          fyne-cross darwin -arch=amd64,arm64
