@@ -96,8 +96,7 @@ jobs:
       - run: |
           go install  fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
-          brew install podman
-          podman machine init
-          podman machine start
-          alias docker=podman
+          brew install colima
+          colima start
+          alias docker=colima
           fyne-cross darwin -arch=amd64,arm64
