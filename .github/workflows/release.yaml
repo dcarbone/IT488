@@ -56,7 +56,7 @@ jobs:
       # language=sh
       - run: |
           go install github.com/fyne-io/fyne-cross@latest
-          fyne-cross linux -arch=amd64
+          fyne-cross linux -arch=amd64,arm64
           mv 'fyne-cross/bin/linux-amd64/IT488' 'todo-today-linux-amd64'
           mv 'fyne-cross/bin/linux-arm64/IT488' 'todo-today-linux-arm64'
 
@@ -108,5 +108,6 @@ jobs:
           go install  fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           brew install docker colima
+          mkdir -p /tmp/colima
           colima start
           fyne-cross darwin -arch=amd64,arm64
