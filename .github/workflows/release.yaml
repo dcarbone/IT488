@@ -97,8 +97,8 @@ jobs:
           go install  fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           fyne-cross windows -arch=amd64,arm64
-          mv 'fyne-cross/bin/windows-amd64/IT488.exe' 'todo-today-windows-amd64.exe'
-          mv 'fyne-cross/bin/windows-arm64/IT488.exe' 'todo-today-windows-arm64.exe'
+          mv 'fyne-cross/bin/windows-amd64/Todo Today.exe' 'todo-today-windows-amd64.exe'
+          mv 'fyne-cross/bin/windows-arm64/Todo Today.exe' 'todo-today-windows-arm64.exe'
           
       - uses: softprops/action-gh-release@v2
         env:
