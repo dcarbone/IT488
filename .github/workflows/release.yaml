@@ -49,23 +49,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-
       - uses: docker/setup-docker-action@v4
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
 
       # language=sh
       - run: |
           go install github.com/fyne-io/fyne-cross@latest
           fyne-cross linux -arch=amd64,arm64
-          fyne-cross windows -arch=amd64,arm64
           mv 'fyne-cross/bin/linux-amd64/IT488' 'todo-today-linux-amd64'
           mv 'fyne-cross/bin/linux-arm64/IT488' 'todo-today-linux-arm64'
-          mv 'fyne-cross/bin/windows-amd64/IT488' 'todo-today-windows-amd64'
-          mv 'fyne-cross/bin/windows-arm64/IT488' 'todo-today-windows-arm64'
 
       - uses: softprops/action-gh-release@v2
         env:
@@ -75,3 +72,63 @@ jobs:
           files: |
             todo-today-linux-amd64
             todo-today-linux-arm64
+
+  build-windows:
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: docker/setup-docker-action@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: actions/setup-go@v5
+
+        with:
+          go-version-file: 'go.mod'
+
+      # language=sh
+      - run: |
+          go install  fyne.io/fyne/v2/cmd/fyne@latest
+          go install github.com/fyne-io/fyne-cross@latest
+          fyne-cross windows -arch=amd64,arm64
+          mv 'fyne-cross/bin/windows-amd64/IT488.exe' 'todo-today-windows-amd64.exe'
+          mv 'fyne-cross/bin/windows-arm64/IT488.exe' 'todo-today-windows-arm64.exe'
+          
+      - uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: '${{ needs.release.outputs.version }}'
+          files: |
+            todo-today-windows-amd64.exe
+            todo-today-windows-arm64.exe
+
+#  build-macos:
+#    needs:
+#      - release
+#    runs-on: macos-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - uses: docker/setup-docker-action@v4
+#      - uses: docker/setup-qemu-action@v3
+#      - uses: docker/setup-buildx-action@v3
+#
+#      - uses: actions/setup-go@v5
+#        with:
+#          go-version-file: 'go.mod'
+#
+#      # language=sh
+#      - run: |
+#          go install  fyne.io/fyne/v2/cmd/fyne@latest
+#          go install github.com/fyne-io/fyne-cross@latest
+#          fyne-cross darwin -arch=amd64,arm64
