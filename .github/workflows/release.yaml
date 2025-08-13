@@ -125,7 +125,6 @@ jobs:
 
       # language=sh
       - run: |
-          brew install lipo
           for arch in amd64 arm64; do GOARCH=${arch} CGO_ENABLED=1 go build -o IT488_${arch}; done && lipo -create -output todo-today-macos IT488_*
 
       - uses: softprops/action-gh-release@v2
