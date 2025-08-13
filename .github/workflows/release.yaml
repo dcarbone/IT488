@@ -126,6 +126,7 @@ jobs:
       # language=sh
       - run: |
           for arch in amd64 arm64; do GOARCH=${arch} CGO_ENABLED=1 go build -o IT488_${arch}; done && lipo -create -output todo-today-macos IT488_*
+          zip todo-today-macos.zip todo-today-macos
 
       - uses: softprops/action-gh-release@v2
         env:
@@ -133,4 +134,4 @@ jobs:
         with:
           tag_name: '${{ needs.release.outputs.version }}'
           files: |
-            todo-today-macos
+            todo-today-macos.zip
