@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -29,52 +28,83 @@ func logAppLifecycle(a fyne.App) {
 type TaskApp struct {
 	mu sync.RWMutex
 
-	db *gorm.DB
+	fyneApp fyne.App
+	db      *gorm.DB
 
-	container *fyne.Container
+	container      *fyne.Container
+	body           *fyne.Container
+	contentWrapper *fyne.Container
+	activeView     View
 }
 
 func newTaskApp(fyneApp fyne.App, db *gorm.DB) *TaskApp {
 	ta := TaskApp{
-		db: db,
-	}
-
-	logo, err := GetFullSizeLogoPNG()
-	if err != nil {
-		panic(fmt.Sprintf("error reading logo: %v", err))
+		fyneApp: fyneApp,
+		db:      db,
 	}
 
 	fyneApp.Settings().SetTheme(NewTheme())
 
-	logoImg := canvas.NewImageFromImage(logo)
-	logoImg.FillMode = canvas.ImageFillOriginal
+	ta.contentWrapper = container.NewStack()
+
+	ta.body = container.NewBorder(
+		nil,
+		widget.NewButton("Quit", func() { fyneApp.Quit() }),
+		nil,
+		nil,
+		ta.contentWrapper,
+	)
 
 	ta.container = container.NewStack(
 		canvas.NewRectangle(ThemeBackgroundColor()),
-		container.NewBorder(
-			nil,
-			widget.NewButton("Quit", func() { fyneApp.Quit() }),
-			nil,
-			nil,
-			container.NewCenter(
-				container.NewVBox(
-					logoImg,
-					widget.NewButton("Today's List", func() {
-
-					}),
-					widget.NewButton("Create List", func() {
-
-					}),
-				),
-			),
-		),
+		ta.body,
 	)
 
 	return &ta
+}
+
+func (ta *TaskApp) renderView(view View) {
+	if ta.activeView != nil {
+		ta.activeView.Background()
+	}
+	ta.contentWrapper.RemoveAll()
+	ta.activeView = view
+	ta.activeView.Foreground()
+	ta.contentWrapper.Add(ta.activeView.Content())
+}
+
+func (ta *TaskApp) RenderHomeView() {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+
+	if _, ok := ta.activeView.(*HomeView); ok {
+		return
+	}
+
+	ta.renderView(NewHomeView(ta))
+}
+
+func (ta *TaskApp) RenderCreateListView() {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+
+	if _, ok := ta.activeView.(*CreateTaskListView); ok {
+		return
+	}
+
+	ta.renderView(NewCreateTaskListView(ta))
+}
+
+func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
+
 }
 
 func (ta *TaskApp) Container() *fyne.Container {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 	return ta.container
+}
+
+func (ta *TaskApp) DB() *gorm.DB {
+	return ta.db
 }

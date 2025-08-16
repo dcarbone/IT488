@@ -74,6 +74,8 @@ func main() {
 	mainWindow.Resize(fyne.Size{Height: 700, Width: 300})
 	mainWindow.SetContent(taskApp.Container())
 
+	taskApp.RenderHomeView()
+
 	// if context is cancelled, close app.
 	go func() {
 		<-ctx.Done()

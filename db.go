@@ -103,8 +103,10 @@ func (ct TaskStatus) Value() (driver.Value, error) {
 
 type TaskList struct {
 	gorm.Model
-	Label string `gorm:"not null"`
-	Tasks []Task `gorm:"constraint:OnDelete:CASCADE"`
+	Label       string `gorm:"not null"`
+	Date        time.Time
+	Description string
+	Tasks       []Task `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type Task struct {
