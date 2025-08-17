@@ -205,15 +205,18 @@ func (v *CreateTaskListView) render(err error) fyne.CanvasObject {
 		theme.DocumentSaveIcon(),
 		func() {
 			v.mu.Lock()
-			defer v.mu.Unlock()
 			if v.state != ViewStateForeground {
+				v.mu.Unlock()
 				return
 			}
 			tl, err := v.createList(nameInput.Text, descInput.Text)
 			if err != nil {
 				v.render(err)
+				v.mu.Unlock()
 				return
 			}
+
+			v.mu.Unlock()
 			v.app.RenderTaskListView(tl)
 		},
 	)

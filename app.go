@@ -98,11 +98,11 @@ func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 
-	//if tlv, ok := ta.activeView.(*TaskListView); ok && tlv.taskList.ID != taskList.ID {
-	//	return
-	//}
-	//
-	//ta.renderView(NewTaskListView(ta, taskList))
+	if tlv, ok := ta.activeView.(*TaskListView); ok && tlv.taskList.ID != taskList.ID {
+		return
+	}
+
+	ta.renderView(NewTaskListView(ta, taskList))
 }
 
 func (ta *TaskApp) Container() *fyne.Container {
