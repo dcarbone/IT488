@@ -69,8 +69,7 @@ func (ta *TaskApp) renderView(view View) {
 	}
 	ta.contentWrapper.RemoveAll()
 	ta.activeView = view
-	ta.activeView.Foreground()
-	ta.contentWrapper.Add(ta.activeView.Content())
+	ta.contentWrapper.Add(ta.activeView.Foreground())
 }
 
 func (ta *TaskApp) RenderHomeView() {
@@ -96,7 +95,14 @@ func (ta *TaskApp) RenderCreateListView() {
 }
 
 func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
 
+	//if tlv, ok := ta.activeView.(*TaskListView); ok && tlv.taskList.ID != taskList.ID {
+	//	return
+	//}
+	//
+	//ta.renderView(NewTaskListView(ta, taskList))
 }
 
 func (ta *TaskApp) Container() *fyne.Container {
