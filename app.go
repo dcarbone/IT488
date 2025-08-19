@@ -105,15 +105,15 @@ func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
 	ta.renderView(NewTaskListView(ta, taskList))
 }
 
-func (ta *TaskApp) RenderCreateTaskView(taskList TaskList) {
+func (ta *TaskApp) RenderMutateTaskView(taskList TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 
-	if ctv, ok := ta.activeView.(*CreateTaskView); ok && ctv.taskList.ID == taskList.ID {
+	if ctv, ok := ta.activeView.(*MutateTaskView); ok && ctv.taskList.ID == taskList.ID {
 		return
 	}
 
-	ta.renderView(NewCreateTaskView(ta, taskList))
+	ta.renderView(NewMutateTaskView(ta, taskList))
 }
 
 func (ta *TaskApp) Container() *fyne.Container {

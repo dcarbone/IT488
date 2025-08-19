@@ -275,7 +275,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	hdr := container.NewHBox(
 		HeaderCanvas(v.taskList.Label),
 		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderCreateTaskView(v.taskList)
+			v.app.RenderMutateTaskView(v.taskList)
 		}),
 	)
 
@@ -350,26 +350,26 @@ func (v *TaskListView) Background() {
 	v.background()
 }
 
-var _ View = (*CreateTaskView)(nil)
+var _ View = (*MutateTaskView)(nil)
 
-type CreateTaskView struct {
+type MutateTaskView struct {
 	*baseView
 	taskList TaskList
 }
 
-func NewCreateTaskView(app *TaskApp, taskList TaskList) *CreateTaskView {
-	v := CreateTaskView{
-		baseView: newBaseView(fmt.Sprintf("New Task in List %d", taskList.ID), app),
+func NewMutateTaskView(app *TaskApp, taskList TaskList) *MutateTaskView {
+	v := MutateTaskView{
+		baseView: newBaseView(fmt.Sprintf("Mutate Task in List %d", taskList.ID), app),
 		taskList: taskList,
 	}
 	return &v
 }
 
-func (v *CreateTaskView) Foreground() fyne.CanvasObject {
+func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	return container.NewStack(widget.NewLabel("Hello there, we're a work in progress :)"))
 }
 
-func (v *CreateTaskView) Background() {
+func (v *MutateTaskView) Background() {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	v.background()
