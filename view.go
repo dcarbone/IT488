@@ -272,7 +272,12 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		cancel()
 	}()
 
-	hdr := HeaderCanvas(v.taskList.Label)
+	hdr := container.NewHBox(
+		HeaderCanvas(v.taskList.Label),
+		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
+			v.app.RenderCreateTaskView(v.taskList)
+		}),
+	)
 
 	taskCount, err := CountAssociation[TaskList](ctx, v.app.DB(), "Tasks")
 	if err != nil {
@@ -294,20 +299,41 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		panic(fmt.Sprintf("Error finding tasks in list %q: %v", v.taskList.Label, err))
 	}
 
-	taskViews := make([]fyne.CanvasObject, taskCount)
-	for i := range tasks {
-		taskViews[i] = container.NewBorder(
-			nil,
-			canvas.NewText(fmt.Sprintf("Created: %s", tasks[i].CreatedAt), color.Black),
-			nil,
-			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
+	hbox := container.NewHBox()
 
+	newTaskView := func(task Task) fyne.CanvasObject {
+		var taskView fyne.CanvasObject
+		taskView = container.NewBorder(
+			nil,
+			canvas.NewText(fmt.Sprintf("Created: %s", task.CreatedAt), color.Black),
+
+			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
+				// TODO: implement edit
 			}),
-			canvas.NewText(tasks[i].Label, color.Black),
+
+			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
+				v.mu.Lock()
+				defer v.mu.Unlock()
+				if v.state == ViewStateBackground {
+					return
+				}
+				res := v.app.DB().Delete(task)
+				if res.Error != nil {
+					panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, err))
+				}
+				hbox.Remove(taskView)
+			}),
+
+			canvas.NewText(task.Label, color.Black),
 		)
+		return taskView
 	}
 
-	body := container.NewHScroll(container.NewHBox(taskViews...))
+	for i := range tasks {
+		hbox.Add(newTaskView(tasks[i]))
+	}
+
+	body := container.NewHScroll(hbox)
 
 	return container.NewBorder(
 		hdr,
@@ -319,6 +345,31 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 }
 
 func (v *TaskListView) Background() {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.background()
+}
+
+var _ View = (*CreateTaskView)(nil)
+
+type CreateTaskView struct {
+	*baseView
+	taskList TaskList
+}
+
+func NewCreateTaskView(app *TaskApp, taskList TaskList) *CreateTaskView {
+	v := CreateTaskView{
+		baseView: newBaseView(fmt.Sprintf("New Task in List %d", taskList.ID), app),
+		taskList: taskList,
+	}
+	return &v
+}
+
+func (v *CreateTaskView) Foreground() fyne.CanvasObject {
+	return container.NewStack(widget.NewLabel("Hello there, we're a work in progress :)"))
+}
+
+func (v *CreateTaskView) Background() {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	v.background()
