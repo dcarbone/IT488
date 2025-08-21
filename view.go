@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"image/color"
 	"log/slog"
+	"regexp"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -119,7 +122,22 @@ func (v *HomeView) Foreground() fyne.CanvasObject {
 			container.NewVBox(
 				v.logoImg,
 				widget.NewButton("Today's List", func() {
-
+					ctx, cancel := context.WithCancel(context.Background())
+					defer cancel()
+					go func() {
+						<-v.deactivated
+						cancel()
+					}()
+					latestList, err := FindOneModel[TaskList](ctx, v.app.DB(), WithSort("Date desc"))
+					if err != nil {
+						log.Error("Error finding latest task list", "err", err)
+						panic(fmt.Sprintf("Error finding latest task list: %v", err))
+					}
+					if latestList == nil {
+						v.app.RenderCreateListView()
+						return
+					}
+					v.app.RenderTaskListView(*latestList)
 				}),
 				widget.NewButton("Create List", v.app.RenderCreateListView),
 			),
@@ -275,7 +293,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	hdr := container.NewHBox(
 		HeaderCanvas(v.taskList.Label),
 		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderMutateTaskView(v.taskList)
+			v.app.RenderMutateTaskModal(&v.taskList)
 		}),
 	)
 
@@ -301,7 +319,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 
 	hbox := container.NewHBox()
 
-	newTaskView := func(task Task) fyne.CanvasObject {
+	makeTaskView := func(task Task) fyne.CanvasObject {
 		var taskView fyne.CanvasObject
 		taskView = container.NewBorder(
 			nil,
@@ -330,7 +348,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	}
 
 	for i := range tasks {
-		hbox.Add(newTaskView(tasks[i]))
+		hbox.Add(makeTaskView(tasks[i]))
 	}
 
 	body := container.NewHScroll(hbox)
@@ -354,19 +372,132 @@ var _ View = (*MutateTaskView)(nil)
 
 type MutateTaskView struct {
 	*baseView
-	taskList TaskList
+	taskList *TaskList
 }
 
-func NewMutateTaskView(app *TaskApp, taskList TaskList) *MutateTaskView {
+func NewMutateTaskView(app *TaskApp, taskList *TaskList) *MutateTaskView {
 	v := MutateTaskView{
-		baseView: newBaseView(fmt.Sprintf("Mutate Task in List %d", taskList.ID), app),
+		baseView: newBaseView("Mutate Task Modal", app),
 		taskList: taskList,
 	}
 	return &v
 }
 
+var taskSelectRe = regexp.MustCompile("\\((\\d+)\\)$")
+
 func (v *MutateTaskView) Foreground() fyne.CanvasObject {
-	return container.NewStack(widget.NewLabel("Hello there, we're a work in progress :)"))
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	if !v.foreground() {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-v.deactivated
+		cancel()
+	}()
+
+	allTaskLists, err := FindModel[TaskList](ctx, v.app.DB())
+	if err != nil {
+		log.Error("Error fetching task lists", "err", err)
+		panic(fmt.Sprintf("Error fetching task lists: %v", err))
+	}
+
+	listNames := make([]string, 0)
+	for _, tl := range allTaskLists {
+		listNames = append(listNames, fmt.Sprintf("%s (%d)", tl.Label, tl.ID))
+	}
+
+	hdr := container.NewHBox(
+		HeaderCanvas("Create New Task"),
+		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), v.app.RenderPreviousView),
+	)
+
+	titleLabel := canvas.NewText("Title", color.Black)
+	titleInput := widget.NewEntry()
+	titleInput.OnChanged = func(s string) {
+		if len(s) > 50 {
+			titleInput.SetText(s[:50])
+		}
+	}
+	titleInput.PlaceHolder = "Task Title"
+
+	chosenTaskList := v.taskList
+
+	tlSelectLabel := canvas.NewText("Choose Task List", color.Black)
+	tlSelect := widget.NewSelect(listNames, func(s string) {
+		id, _ := strconv.ParseUint(taskSelectRe.FindStringSubmatch(s)[1], 10, 64)
+		for _, tl := range allTaskLists {
+			if uint(id) == tl.ID {
+				chosenTaskList = &tl
+				break
+			}
+		}
+	})
+
+	if chosenTaskList != nil {
+		tlSelect.Selected = fmt.Sprintf("%s (%d)", chosenTaskList.Label, chosenTaskList.ID)
+	}
+
+	chosenStatus := TaskStatusTodo
+	statusSelectLabel := canvas.NewText("Status", color.Black)
+	statusSelect := widget.NewSelect(TaskStatuses, func(s string) {
+		chosenStatus = TaskStatus(strings.ToLower(s))
+	})
+	statusSelect.Selected = strings.ToTitle(string(chosenStatus))
+
+	descLabel := canvas.NewText("Description:", color.Black)
+	descInput := widget.NewMultiLineEntry()
+	descInput.PlaceHolder = "Task description in Markdown"
+	descInput.OnChanged = func(s string) {
+		if len(s) > 500 {
+			descInput.SetText(s[:500])
+		}
+	}
+
+	body := container.NewVBox(
+		titleLabel,
+		titleInput,
+
+		tlSelectLabel,
+		tlSelect,
+
+		statusSelectLabel,
+		statusSelect,
+
+		descLabel,
+		descInput,
+	)
+
+	ftr := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
+		task := Task{
+			Label:       titleLabel.Text,
+			Description: descInput.Text,
+			Status:      chosenStatus,
+			TaskList:    chosenTaskList,
+			Priority:    uint(taskPrioritySrc.Add(1)),
+		}
+		res := v.app.DB().Create(&task)
+		if res.Error != nil {
+			log.Error("Error saving task", "err", res.Error)
+			panic(fmt.Sprintf("Error saving task: %v", res.Error))
+		}
+
+		v.app.RenderPreviousView()
+	})
+
+	content := container.NewBorder(
+		hdr,
+		ftr,
+		nil,
+		nil,
+		body,
+	)
+
+	return content
 }
 
 func (v *MutateTaskView) Background() {

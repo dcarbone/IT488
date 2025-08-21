@@ -4,11 +4,17 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	glogger "gorm.io/gorm/logger"
+)
+
+var (
+	taskPrioritySrc atomic.Uint64
 )
 
 type gormLogger struct {
@@ -69,6 +75,17 @@ func openDB(dbFile string, logDebug bool) (*gorm.DB, error) {
 		return nil, fmt.Errorf("error applying migrations: %w", err)
 	}
 
+	var highestPriority uint
+	row := db.Table("Tasks").Select("max(priority)").Row()
+	if err = row.Scan(&highestPriority); err != nil {
+		log.Error("Error finding highest task priority", "err", err)
+		panic(fmt.Sprintf("Error finding highest task priority: %v", err))
+	}
+
+	taskPrioritySrc.Store(uint64(highestPriority))
+
+	log.Debug("Found highest task priority", "task_priority", highestPriority)
+
 	return db, nil
 }
 
@@ -101,6 +118,15 @@ func (ct TaskStatus) Value() (driver.Value, error) {
 	return string(ct), nil
 }
 
+var (
+	TaskStatuses = []string{
+		strings.ToTitle(string(TaskStatusTodo)),
+		strings.ToTitle(string(TaskStatusInProgress)),
+		strings.ToTitle(string(TaskStatusCompleted)),
+		strings.ToTitle(string(TaskStatusSkip)),
+	}
+)
+
 type TaskList struct {
 	gorm.Model
 	Label       string `gorm:"not null"`
@@ -114,7 +140,7 @@ type Task struct {
 	Label       string `gorm:"not null"`
 	Description string
 	Status      TaskStatus `gorm:"type:enum('todo','in progress','completed','skip');default:todo;type:TaskStatus"`
-	Priority    uint       `gorm:"type:increment;uniqueIndex;not null"`
+	Priority    uint       `gorm:"unique;not null"`
 
 	TaskListID int
 	TaskList   *TaskList

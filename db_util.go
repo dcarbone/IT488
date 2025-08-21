@@ -10,6 +10,12 @@ type ModelQueryOpt func(db *gorm.DB) *gorm.DB
 
 type AssociationQueryOpt func(assoc *gorm.Association) *gorm.Association
 
+func WithLimit(limit int) ModelQueryOpt {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Limit(limit)
+	}
+}
+
 func WithSort(clause any) ModelQueryOpt {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Order(clause)
@@ -44,6 +50,14 @@ func FindModel[T any](ctx context.Context, db *gorm.DB, opts ...ModelQueryOpt) (
 	}
 	out := make([]T, 0)
 	return out, qdb.Find(&out).Error
+}
+
+func FindOneModel[T any](ctx context.Context, db *gorm.DB, opts ...ModelQueryOpt) (*T, error) {
+	models, err := FindModel[T](ctx, db, append(opts, WithLimit(1))...)
+	if err != nil || len(models) == 0 {
+		return nil, err
+	}
+	return &models[0], nil
 }
 
 func CountAssociation[T any](ctx context.Context, db *gorm.DB, column string, opts ...AssociationQueryOpt) (int64, error) {

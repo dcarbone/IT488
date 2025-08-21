@@ -31,10 +31,13 @@ type TaskApp struct {
 	fyneApp fyne.App
 	db      *gorm.DB
 
-	container      *fyne.Container
-	body           *fyne.Container
-	contentWrapper *fyne.Container
-	activeView     View
+	container       *fyne.Container
+	body            *fyne.Container
+	contentWrapper  *fyne.Container
+	activeView      View
+	previousView    View
+	mutateTaskView  *MutateTaskView
+	mutateTaskPopup *widget.PopUp
 }
 
 func newTaskApp(fyneApp fyne.App, db *gorm.DB) *TaskApp {
@@ -66,10 +69,21 @@ func newTaskApp(fyneApp fyne.App, db *gorm.DB) *TaskApp {
 func (ta *TaskApp) renderView(view View) {
 	if ta.activeView != nil {
 		ta.activeView.Background()
+		ta.previousView = ta.activeView
 	}
 	ta.contentWrapper.RemoveAll()
 	ta.activeView = view
 	ta.contentWrapper.Add(ta.activeView.Foreground())
+}
+
+func (ta *TaskApp) RenderPreviousView() {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	if ta.previousView != nil {
+		ta.renderView(ta.previousView)
+	} else {
+		ta.renderView(NewHomeView(ta))
+	}
 }
 
 func (ta *TaskApp) RenderHomeView() {
@@ -105,15 +119,24 @@ func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
 	ta.renderView(NewTaskListView(ta, taskList))
 }
 
-func (ta *TaskApp) RenderMutateTaskView(taskList TaskList) {
+func (ta *TaskApp) RenderMutateTaskModal(taskList *TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 
-	if ctv, ok := ta.activeView.(*MutateTaskView); ok && ctv.taskList.ID == taskList.ID {
+	if ta.mutateTaskPopup != nil {
 		return
 	}
 
 	ta.renderView(NewMutateTaskView(ta, taskList))
+}
+
+func (ta *TaskApp) CloseMutateTaskModal() {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	if ta.mutateTaskPopup != nil {
+		ta.mutateTaskPopup.Hide()
+	}
+	ta.mutateTaskView = nil
 }
 
 func (ta *TaskApp) Container() *fyne.Container {
