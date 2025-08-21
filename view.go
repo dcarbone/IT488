@@ -475,7 +475,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		task := Task{
 			Label:       titleLabel.Text,
 			Description: descInput.Text,
-			Status:      chosenStatus,
+			Status:      string(chosenStatus),
 			TaskList:    chosenTaskList,
 			Priority:    uint(taskPrioritySrc.Add(1)),
 		}

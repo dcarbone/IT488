@@ -140,8 +140,8 @@ type Task struct {
 	gorm.Model
 	Label       string `gorm:"not null"`
 	Description string
-	Status      TaskStatus `gorm:"type:enum('todo','in progress','completed','skip');default:todo;type:TaskStatus"`
-	Priority    uint       `gorm:"unique;not null"`
+	Status      string
+	Priority    uint `gorm:"unique;not null"`
 
 	TaskListID int
 	TaskList   *TaskList
