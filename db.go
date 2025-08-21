@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"strings"
@@ -75,14 +76,14 @@ func openDB(dbFile string, logDebug bool) (*gorm.DB, error) {
 		return nil, fmt.Errorf("error applying migrations: %w", err)
 	}
 
-	var highestPriority uint
+	var highestPriority sql.Null[uint]
 	row := db.Table("Tasks").Select("max(priority)").Row()
 	if err = row.Scan(&highestPriority); err != nil {
 		log.Error("Error finding highest task priority", "err", err)
 		panic(fmt.Sprintf("Error finding highest task priority: %v", err))
 	}
 
-	taskPrioritySrc.Store(uint64(highestPriority))
+	taskPrioritySrc.Store(uint64(highestPriority.V))
 
 	log.Debug("Found highest task priority", "task_priority", highestPriority)
 

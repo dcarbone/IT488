@@ -31,7 +31,7 @@ func WithPreload(query string, args ...any) ModelQueryOpt {
 func CountModel[T any](ctx context.Context, db *gorm.DB, opts ...ModelQueryOpt) (int64, error) {
 	qdb := db.WithContext(ctx).Model(new(T))
 	for _, opt := range opts {
-		opt(qdb)
+		qdb = opt(qdb)
 		if qdb.Error != nil {
 			return 0, db.Error
 		}
@@ -43,7 +43,7 @@ func CountModel[T any](ctx context.Context, db *gorm.DB, opts ...ModelQueryOpt) 
 func FindModel[T any](ctx context.Context, db *gorm.DB, opts ...ModelQueryOpt) ([]T, error) {
 	qdb := db.WithContext(ctx).Model(new(T))
 	for _, opt := range opts {
-		opt(qdb)
+		qdb = opt(qdb)
 		if qdb.Error != nil {
 			return nil, qdb.Error
 		}
@@ -60,13 +60,13 @@ func FindOneModel[T any](ctx context.Context, db *gorm.DB, opts ...ModelQueryOpt
 	return &models[0], nil
 }
 
-func CountAssociation[T any](ctx context.Context, db *gorm.DB, column string, opts ...AssociationQueryOpt) (int64, error) {
-	assoc := db.WithContext(ctx).Model(new(T)).Association(column)
+func CountAssociation[T any](ctx context.Context, db *gorm.DB, base T, column string, opts ...AssociationQueryOpt) (int64, error) {
+	assoc := db.WithContext(ctx).Model(&base).Association(column)
 	if assoc.Error != nil {
 		return 0, assoc.Error
 	}
 	for _, opt := range opts {
-		opt(assoc)
+		assoc = opt(assoc)
 		if assoc.Error != nil {
 			return 0, assoc.Error
 		}
@@ -74,13 +74,13 @@ func CountAssociation[T any](ctx context.Context, db *gorm.DB, column string, op
 	return assoc.Count(), assoc.Error
 }
 
-func FindAssociation[T, E any](ctx context.Context, db *gorm.DB, column string, opts ...AssociationQueryOpt) ([]E, error) {
-	assoc := db.WithContext(ctx).Model(new(T)).Association(column)
+func FindAssociation[T, E any](ctx context.Context, db *gorm.DB, base T, column string, opts ...AssociationQueryOpt) ([]E, error) {
+	assoc := db.WithContext(ctx).Model(&base).Association(column)
 	if assoc.Error != nil {
 		return nil, assoc.Error
 	}
 	for _, opt := range opts {
-		opt(assoc)
+		assoc = opt(assoc)
 		if assoc.Error != nil {
 			return nil, assoc.Error
 		}

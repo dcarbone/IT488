@@ -276,11 +276,11 @@ func NewTaskListView(app *TaskApp, taskList TaskList) *TaskListView {
 
 func (v *TaskListView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
-	defer v.mu.Unlock()
-
 	if !v.foreground() {
+		v.mu.Unlock()
 		return nil
 	}
+	v.mu.Unlock()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -297,7 +297,8 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		}),
 	)
 
-	taskCount, err := CountAssociation[TaskList](ctx, v.app.DB(), "Tasks")
+	log.Debug("Counting tasks...", "task_list", v.taskList.Label)
+	taskCount, err := CountAssociation[TaskList](ctx, v.app.DB(), v.taskList, "Tasks")
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return nil
@@ -306,9 +307,13 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		panic(fmt.Sprintf("Error counting tasks in list %q: %v", v.taskList.Label, err))
 	}
 
+	log.Debug("Got task count", "task_list", v.taskList.Label, "count", taskCount)
+
 	ftr := canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black)
 
-	tasks, err := FindAssociation[TaskList, Task](ctx, v.app.DB(), "Tasks")
+	log.Debug("Finding tasks...", "task_list", v.taskList.Label)
+
+	tasks, err := FindAssociation[TaskList, Task](ctx, v.app.DB(), v.taskList, "Tasks")
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return nil
@@ -317,11 +322,12 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		panic(fmt.Sprintf("Error finding tasks in list %q: %v", v.taskList.Label, err))
 	}
 
-	hbox := container.NewHBox()
+	log.Debug("Found tasks", "task_list", v.taskList.Label, "task_count", len(tasks))
 
-	makeTaskView := func(task Task) fyne.CanvasObject {
-		var taskView fyne.CanvasObject
-		taskView = container.NewBorder(
+	taskRows := make([]fyne.CanvasObject, 0)
+
+	for _, task := range tasks {
+		taskRows = append(taskRows, container.NewBorder(
 			nil,
 			canvas.NewText(fmt.Sprintf("Created: %s", task.CreatedAt), color.Black),
 
@@ -330,8 +336,6 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 			}),
 
 			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-				v.mu.Lock()
-				defer v.mu.Unlock()
 				if v.state == ViewStateBackground {
 					return
 				}
@@ -339,19 +343,14 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 				if res.Error != nil {
 					panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, err))
 				}
-				hbox.Remove(taskView)
+				v.app.RenderTaskListView(v.taskList)
 			}),
 
 			canvas.NewText(task.Label, color.Black),
-		)
-		return taskView
+		))
 	}
 
-	for i := range tasks {
-		hbox.Add(makeTaskView(tasks[i]))
-	}
-
-	body := container.NewHScroll(hbox)
+	body := container.NewHScroll(container.NewHBox(taskRows...))
 
 	return container.NewBorder(
 		hdr,
