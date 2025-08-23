@@ -1,0 +1,187 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"image/color"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
+)
+
+var _ View = (*MutateTaskView)(nil)
+
+type MutateTaskView struct {
+	*baseView
+	task     *Task
+	taskList *TaskList
+}
+
+func NewMutateTaskView(app *TaskApp, task *Task, taskList *TaskList) *MutateTaskView {
+	v := MutateTaskView{
+		baseView: newBaseView("Mutate Task Modal", app),
+		task:     task,
+		taskList: taskList,
+	}
+	return &v
+}
+
+var taskSelectRe = regexp.MustCompile("\\((\\d+)\\)$")
+
+func (v *MutateTaskView) Foreground() fyne.CanvasObject {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	if !v.foreground() {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-v.deactivated
+		cancel()
+	}()
+
+	allTaskLists, err := FindModel[TaskList](ctx, v.app.DB())
+	if err != nil {
+		log.Error("Error fetching task lists", "err", err)
+		panic(fmt.Sprintf("Error fetching task lists: %v", err))
+	}
+
+	listNames := make([]string, 0)
+	for _, tl := range allTaskLists {
+		listNames = append(listNames, fmt.Sprintf("%s (%d)", tl.Label, tl.ID))
+	}
+
+	var title fyne.CanvasObject
+	if v.task != nil {
+		title = HeaderCanvas("Edit Task")
+	} else {
+		title = HeaderCanvas("Create New Task")
+	}
+	hdr := container.NewHBox(
+		title,
+		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), v.app.RenderPreviousView),
+	)
+
+	titleLabel := canvas.NewText("Title", color.Black)
+	titleInput := widget.NewEntry()
+	if v.task != nil {
+		titleInput.SetText(v.task.Label)
+	}
+	titleInput.OnChanged = func(s string) {
+		if len(s) > 50 {
+			titleInput.SetText(s[:50])
+		}
+	}
+	titleInput.PlaceHolder = "Task Title"
+
+	chosenTaskList := v.taskList
+
+	tlSelectLabel := canvas.NewText("Choose Task List", color.Black)
+	tlSelect := widget.NewSelect(listNames, func(s string) {
+		var id uint
+		if v.task != nil {
+			id = uint(v.task.TaskListID)
+		} else {
+			idd, _ := strconv.ParseUint(taskSelectRe.FindStringSubmatch(s)[1], 10, 64)
+			id = uint(idd)
+		}
+		for _, tl := range allTaskLists {
+			if id == tl.ID {
+				chosenTaskList = &tl
+				break
+			}
+		}
+	})
+
+	if chosenTaskList != nil {
+		tlSelect.Selected = fmt.Sprintf("%s (%d)", chosenTaskList.Label, chosenTaskList.ID)
+	}
+
+	chosenStatus := TaskStatusTodo
+	if v.task != nil {
+		chosenStatus = v.task.Status
+	}
+	statusSelectLabel := canvas.NewText("Status", color.Black)
+	statusSelect := widget.NewSelect(TaskStatuses, func(s string) {
+		chosenStatus = strings.ToLower(s)
+	})
+	statusSelect.Selected = strings.ToTitle(chosenStatus)
+
+	descLabel := canvas.NewText("Description:", color.Black)
+	descInput := widget.NewMultiLineEntry()
+	if v.task != nil {
+		descInput.SetText(v.task.Description)
+	}
+	descInput.PlaceHolder = "Task description in Markdown"
+	descInput.OnChanged = func(s string) {
+		if len(s) > 500 {
+			descInput.SetText(s[:500])
+		}
+	}
+
+	body := container.NewVBox(
+		titleLabel,
+		titleInput,
+
+		tlSelectLabel,
+		tlSelect,
+
+		statusSelectLabel,
+		statusSelect,
+
+		descLabel,
+		descInput,
+	)
+
+	ftr := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
+		var res *gorm.DB
+		if v.task != nil {
+			v.task.Label = titleInput.Text
+			v.task.Description = descInput.Text
+			v.task.Status = chosenStatus
+			v.task.TaskList = chosenTaskList
+			res = v.app.DB().Updates(v.task)
+		} else {
+			task := Task{
+				Label:       titleInput.Text,
+				Description: descInput.Text,
+				Status:      chosenStatus,
+				TaskList:    chosenTaskList,
+				Priority:    uint(taskPrioritySrc.Add(1)),
+			}
+			res = v.app.DB().Create(&task)
+		}
+		if res.Error != nil {
+			log.Error("Error saving task", "err", res.Error)
+			panic(fmt.Sprintf("Error saving task: %v", res.Error))
+		}
+
+		v.app.RenderPreviousView()
+	})
+
+	content := container.NewBorder(
+		hdr,
+		ftr,
+		nil,
+		nil,
+		body,
+	)
+
+	return content
+}
+
+func (v *MutateTaskView) Background() {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.background()
+}
