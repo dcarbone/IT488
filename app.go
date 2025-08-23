@@ -104,10 +104,10 @@ func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
 	ta.renderView(NewTaskListView(ta, taskList))
 }
 
-func (ta *TaskApp) RenderMutateTaskModal(taskList *TaskList) {
+func (ta *TaskApp) RenderMutateTaskModal(task *Task, taskList *TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-	ta.renderView(NewMutateTaskView(ta, taskList))
+	ta.renderView(NewMutateTaskView(ta, task, taskList))
 }
 
 func (ta *TaskApp) CloseMutateTaskModal() {

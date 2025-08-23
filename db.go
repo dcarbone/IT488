@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -101,23 +100,12 @@ func tryCloseDB(db *gorm.DB) {
 	_ = sdb.Close()
 }
 
-type TaskStatus string
-
 const (
-	TaskStatusTodo       TaskStatus = "todo"
-	TaskStatusInProgress TaskStatus = "in progress"
-	TaskStatusCompleted  TaskStatus = "completed"
-	TaskStatusSkip       TaskStatus = "skip"
+	TaskStatusTodo       = "todo"
+	TaskStatusInProgress = "in progress"
+	TaskStatusCompleted  = "completed"
+	TaskStatusSkip       = "skip"
 )
-
-func (ct *TaskStatus) Scan(value any) error {
-	*ct = TaskStatus(value.([]byte))
-	return nil
-}
-
-func (ct TaskStatus) Value() (driver.Value, error) {
-	return string(ct), nil
-}
 
 var (
 	TaskStatuses = []string{

@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
 )
 
 type ViewState int
@@ -293,7 +294,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	hdr := container.NewHBox(
 		HeaderCanvas(v.taskList.Label),
 		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderMutateTaskModal(&v.taskList)
+			v.app.RenderMutateTaskModal(nil, &v.taskList)
 		}),
 	)
 
@@ -343,7 +344,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 				canvas.NewText(fmt.Sprintf("Created: %s", task.CreatedAt), color.Black),
 
 				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
-					// TODO: implement edit
+					v.app.RenderMutateTaskModal(&task, &v.taskList)
 				}),
 
 				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
@@ -378,12 +379,14 @@ var _ View = (*MutateTaskView)(nil)
 
 type MutateTaskView struct {
 	*baseView
+	task     *Task
 	taskList *TaskList
 }
 
-func NewMutateTaskView(app *TaskApp, taskList *TaskList) *MutateTaskView {
+func NewMutateTaskView(app *TaskApp, task *Task, taskList *TaskList) *MutateTaskView {
 	v := MutateTaskView{
 		baseView: newBaseView("Mutate Task Modal", app),
+		task:     task,
 		taskList: taskList,
 	}
 	return &v
@@ -417,13 +420,22 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		listNames = append(listNames, fmt.Sprintf("%s (%d)", tl.Label, tl.ID))
 	}
 
+	var title fyne.CanvasObject
+	if v.task != nil {
+		title = HeaderCanvas("Edit Task")
+	} else {
+		title = HeaderCanvas("Create New Task")
+	}
 	hdr := container.NewHBox(
-		HeaderCanvas("Create New Task"),
+		title,
 		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), v.app.RenderPreviousView),
 	)
 
 	titleLabel := canvas.NewText("Title", color.Black)
 	titleInput := widget.NewEntry()
+	if v.task != nil {
+		titleInput.SetText(v.task.Label)
+	}
 	titleInput.OnChanged = func(s string) {
 		if len(s) > 50 {
 			titleInput.SetText(s[:50])
@@ -435,9 +447,15 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 
 	tlSelectLabel := canvas.NewText("Choose Task List", color.Black)
 	tlSelect := widget.NewSelect(listNames, func(s string) {
-		id, _ := strconv.ParseUint(taskSelectRe.FindStringSubmatch(s)[1], 10, 64)
+		var id uint
+		if v.task != nil {
+			id = uint(v.task.TaskListID)
+		} else {
+			idd, _ := strconv.ParseUint(taskSelectRe.FindStringSubmatch(s)[1], 10, 64)
+			id = uint(idd)
+		}
 		for _, tl := range allTaskLists {
-			if uint(id) == tl.ID {
+			if id == tl.ID {
 				chosenTaskList = &tl
 				break
 			}
@@ -449,14 +467,20 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	}
 
 	chosenStatus := TaskStatusTodo
+	if v.task != nil {
+		chosenStatus = v.task.Status
+	}
 	statusSelectLabel := canvas.NewText("Status", color.Black)
 	statusSelect := widget.NewSelect(TaskStatuses, func(s string) {
-		chosenStatus = TaskStatus(strings.ToLower(s))
+		chosenStatus = strings.ToLower(s)
 	})
-	statusSelect.Selected = strings.ToTitle(string(chosenStatus))
+	statusSelect.Selected = strings.ToTitle(chosenStatus)
 
 	descLabel := canvas.NewText("Description:", color.Black)
 	descInput := widget.NewMultiLineEntry()
+	if v.task != nil {
+		descInput.SetText(v.task.Description)
+	}
 	descInput.PlaceHolder = "Task description in Markdown"
 	descInput.OnChanged = func(s string) {
 		if len(s) > 500 {
@@ -479,14 +503,24 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	)
 
 	ftr := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
-		task := Task{
-			Label:       titleInput.Text,
-			Description: descInput.Text,
-			Status:      string(chosenStatus),
-			TaskList:    chosenTaskList,
-			Priority:    uint(taskPrioritySrc.Add(1)),
+
+		var res *gorm.DB
+		if v.task != nil {
+			v.task.Label = titleInput.Text
+			v.task.Description = descInput.Text
+			v.task.Status = chosenStatus
+			v.task.TaskList = chosenTaskList
+			res = v.app.DB().Updates(v.task)
+		} else {
+			task := Task{
+				Label:       titleInput.Text,
+				Description: descInput.Text,
+				Status:      chosenStatus,
+				TaskList:    chosenTaskList,
+				Priority:    uint(taskPrioritySrc.Add(1)),
+			}
+			res = v.app.DB().Create(&task)
 		}
-		res := v.app.DB().Create(&task)
 		if res.Error != nil {
 			log.Error("Error saving task", "err", res.Error)
 			panic(fmt.Sprintf("Error saving task: %v", res.Error))
