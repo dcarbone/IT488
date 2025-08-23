@@ -89,44 +89,24 @@ func (ta *TaskApp) RenderPreviousView() {
 func (ta *TaskApp) RenderHomeView() {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-
-	if _, ok := ta.activeView.(*HomeView); ok {
-		return
-	}
-
 	ta.renderView(NewHomeView(ta))
 }
 
 func (ta *TaskApp) RenderCreateListView() {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-
-	if _, ok := ta.activeView.(*CreateTaskListView); ok {
-		return
-	}
-
 	ta.renderView(NewCreateTaskListView(ta))
 }
 
 func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-
-	if tlv, ok := ta.activeView.(*TaskListView); ok && tlv.taskList.ID == taskList.ID {
-		return
-	}
-
 	ta.renderView(NewTaskListView(ta, taskList))
 }
 
 func (ta *TaskApp) RenderMutateTaskModal(taskList *TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-
-	if ta.mutateTaskPopup != nil {
-		return
-	}
-
 	ta.renderView(NewMutateTaskView(ta, taskList))
 }
 

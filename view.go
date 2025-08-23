@@ -324,40 +324,47 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 
 	log.Debug("Found tasks", "task_list", v.taskList.Label, "task_count", len(tasks))
 
-	taskRows := make([]fyne.CanvasObject, 0)
+	var listOfTasks *widget.List
+	listOfTasks = widget.NewList(
+		func() int {
+			return int(taskCount)
+		},
+		func() fyne.CanvasObject {
+			return container.NewStack(widget.NewLabel("Loading..."))
+		},
+		func(id widget.ListItemID, object fyne.CanvasObject) {
+			task := tasks[id]
 
-	for _, task := range tasks {
-		taskRows = append(taskRows, container.NewBorder(
-			nil,
-			canvas.NewText(fmt.Sprintf("Created: %s", task.CreatedAt), color.Black),
+			content := object.(*fyne.Container)
 
-			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
-				// TODO: implement edit
-			}),
+			content.RemoveAll()
+			content.Add(container.NewBorder(
+				nil,
+				canvas.NewText(fmt.Sprintf("Created: %s", task.CreatedAt), color.Black),
 
-			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-				if v.state == ViewStateBackground {
-					return
-				}
-				res := v.app.DB().Delete(task)
-				if res.Error != nil {
-					panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, err))
-				}
-				v.app.RenderTaskListView(v.taskList)
-			}),
+				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
+					// TODO: implement edit
+				}),
 
-			canvas.NewText(task.Label, color.Black),
-		))
-	}
+				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
+					res := v.app.DB().Delete(&task)
+					if res.Error != nil {
+						panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, res.Error))
+					}
+					v.app.RenderTaskListView(v.taskList)
+				}),
 
-	body := container.NewHScroll(container.NewHBox(taskRows...))
+				canvas.NewText(task.Label, color.Black),
+			))
+		},
+	)
 
 	return container.NewBorder(
 		hdr,
 		ftr,
 		nil,
 		nil,
-		body,
+		listOfTasks,
 	)
 }
 
@@ -473,7 +480,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 
 	ftr := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
 		task := Task{
-			Label:       titleLabel.Text,
+			Label:       titleInput.Text,
 			Description: descInput.Text,
 			Status:      string(chosenStatus),
 			TaskList:    chosenTaskList,
