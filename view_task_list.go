@@ -78,47 +78,12 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 
 	log.Debug("Found tasks", "task_list", v.taskList.Label, "task_count", len(tasks))
 
-	var listOfTasks *widget.List
-	listOfTasks = widget.NewList(
-		func() int {
-			return int(taskCount)
-		},
-		func() fyne.CanvasObject {
-			return container.NewStack(widget.NewLabel("Loading..."))
-		},
-		func(id widget.ListItemID, object fyne.CanvasObject) {
-			task := tasks[id]
-
-			content := object.(*fyne.Container)
-
-			content.RemoveAll()
-			content.Add(container.NewBorder(
-				nil,
-				canvas.NewText(fmt.Sprintf("Created: %s", task.CreatedAt), color.Black),
-
-				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
-					v.app.RenderMutateTaskModal(&task, &v.taskList)
-				}),
-
-				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-					res := v.app.DB().Delete(&task)
-					if res.Error != nil {
-						panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, res.Error))
-					}
-					v.app.RenderTaskListView(v.taskList)
-				}),
-
-				canvas.NewText(task.Label, color.Black),
-			))
-		},
-	)
-
 	return container.NewBorder(
 		hdr,
 		ftr,
 		nil,
 		nil,
-		listOfTasks,
+		buildListOfTasksList(v.app, tasks, func() { v.app.RenderTaskListView(v.taskList) }),
 	)
 }
 

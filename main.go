@@ -74,7 +74,16 @@ func main() {
 	mainWindow.Resize(fyne.Size{Height: 700, Width: 300})
 	mainWindow.SetContent(taskApp.Container())
 
-	taskApp.RenderHomeView()
+	listCount, err := CountModel[TaskList](ctx, taskApp.DB())
+	if err != nil {
+		panic(fmt.Sprintf("Error getting initial task list count: %v", err))
+	}
+
+	if listCount == 0 {
+		taskApp.RenderCreateListView()
+	} else {
+		taskApp.RenderHomeView()
+	}
 
 	// if context is cancelled, close app.
 	go func() {
