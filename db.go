@@ -130,6 +130,7 @@ type Task struct {
 	Description string
 	Status      string
 	Priority    uint `gorm:"unique;not null"`
+	DueDate     time.Time
 
 	TaskListID int
 	TaskList   *TaskList

@@ -7,12 +7,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/sdassow/fyne-datepicker"
 	"gorm.io/gorm"
 )
 
@@ -117,6 +119,15 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	})
 	statusSelect.Selected = strings.ToTitle(chosenStatus)
 
+	chosenDueDate := time.Now()
+	if v.task != nil && !v.task.DueDate.IsZero() {
+		chosenDueDate = v.task.DueDate
+	}
+	dtpLabel := canvas.NewText("Due Date", color.Black)
+	dtp := datepicker.NewDateTimePicker(chosenDueDate, time.Sunday, func(t time.Time, b bool) {
+		chosenDueDate = t
+	})
+
 	descLabel := canvas.NewText("Description:", color.Black)
 	descInput := widget.NewMultiLineEntry()
 	if v.task != nil {
@@ -128,19 +139,25 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			descInput.SetText(s[:500])
 		}
 	}
+	descInput.SetMinRowsVisible(10)
 
-	body := container.NewVBox(
-		titleLabel,
-		titleInput,
+	body := container.NewVScroll(
+		container.NewVBox(
+			titleLabel,
+			titleInput,
 
-		tlSelectLabel,
-		tlSelect,
+			tlSelectLabel,
+			tlSelect,
 
-		statusSelectLabel,
-		statusSelect,
+			statusSelectLabel,
+			statusSelect,
 
-		descLabel,
-		descInput,
+			dtpLabel,
+			dtp,
+
+			descLabel,
+			descInput,
+		),
 	)
 
 	ftr := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
@@ -150,6 +167,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			v.task.Description = descInput.Text
 			v.task.Status = chosenStatus
 			v.task.TaskList = chosenTaskList
+			v.task.DueDate = chosenDueDate
 			res = v.app.DB().Updates(v.task)
 		} else {
 			task := Task{
@@ -157,6 +175,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 				Description: descInput.Text,
 				Status:      chosenStatus,
 				TaskList:    chosenTaskList,
+				DueDate:     chosenDueDate,
 				Priority:    uint(taskPrioritySrc.Add(1)),
 			}
 			res = v.app.DB().Create(&task)

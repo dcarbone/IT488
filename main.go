@@ -71,7 +71,7 @@ func main() {
 	taskApp := newTaskApp(fyneApp, db)
 
 	mainWindow := fyneApp.NewWindow("TODO Today")
-	mainWindow.Resize(fyne.Size{Height: 700, Width: 300})
+	mainWindow.Resize(fyne.NewSize(300, 700))
 	mainWindow.SetContent(taskApp.Container())
 
 	listCount, err := CountModel[TaskList](ctx, taskApp.DB())
