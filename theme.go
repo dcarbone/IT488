@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 const (
@@ -25,26 +26,51 @@ func ThemeBackgroundColor() color.Color {
 	}
 }
 
-var _ fyne.Theme = (*BackgroundColorTheme)(nil)
+// WhiteTextButton is a button that forces its label text to white
+type WhiteTextButton struct {
+	widget.Button
+}
 
-type BackgroundColorTheme struct {
+func NewWhiteTextButton(label string, tapped func()) *WhiteTextButton {
+	btn := &WhiteTextButton{}
+	btn.ExtendBaseWidget(btn)
+	btn.Text = label
+	btn.OnTapped = tapped
+	return btn
+}
+
+func (b *WhiteTextButton) CreateRenderer() fyne.WidgetRenderer {
+	renderer := b.Button.CreateRenderer()
+
+	// Find the label inside renderer.Objects() and override its color
+	for _, obj := range renderer.Objects() {
+		if t, ok := obj.(*canvas.Text); ok {
+			t.Color = color.White
+		}
+	}
+	return renderer
+}
+
+var _ fyne.Theme = (*TodoTodayTheme)(nil)
+
+type TodoTodayTheme struct {
 	fyne.Theme
 }
 
-func NewTheme() *BackgroundColorTheme {
-	th := BackgroundColorTheme{
+func NewTheme() *TodoTodayTheme {
+	th := TodoTodayTheme{
 		Theme: theme.DefaultTheme(),
 	}
 	return &th
 }
 
-func (th *BackgroundColorTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (th *TodoTodayTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
 		return ThemeBackgroundColor()
 
 	default:
-		return th.Theme.Color(name, variant)
+		return th.Theme.Color(name, theme.VariantLight)
 	}
 }
 

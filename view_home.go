@@ -37,28 +37,34 @@ func (v *HomeView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if v.foreground() {
+		todayBtn := NewWhiteTextButton("Today's List", func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			go func() {
+				<-v.deactivated
+				cancel()
+			}()
+			latestList, err := FindOneModel[TaskList](ctx, v.app.DB(), WithSort("Date desc"))
+			if err != nil {
+				log.Error("Error finding latest task list", "err", err)
+				panic(fmt.Sprintf("Error finding latest task list: %v", err))
+			}
+			if latestList == nil {
+				v.app.RenderCreateListView()
+				return
+			}
+			v.app.RenderTaskListView(*latestList)
+		})
+		todayBtn.Importance = widget.MediumImportance
+
+		createListBtn := NewWhiteTextButton("Create List", v.app.RenderCreateListView)
+
 		return container.NewCenter(
+
 			container.NewVBox(
 				v.logoImg,
-				widget.NewButton("Today's List", func() {
-					ctx, cancel := context.WithCancel(context.Background())
-					defer cancel()
-					go func() {
-						<-v.deactivated
-						cancel()
-					}()
-					latestList, err := FindOneModel[TaskList](ctx, v.app.DB(), WithSort("Date desc"))
-					if err != nil {
-						log.Error("Error finding latest task list", "err", err)
-						panic(fmt.Sprintf("Error finding latest task list: %v", err))
-					}
-					if latestList == nil {
-						v.app.RenderCreateListView()
-						return
-					}
-					v.app.RenderTaskListView(*latestList)
-				}),
-				widget.NewButton("Create List", v.app.RenderCreateListView),
+				todayBtn,
+				createListBtn,
 			),
 		)
 	}
