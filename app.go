@@ -29,20 +29,21 @@ type TaskApp struct {
 	mu sync.RWMutex
 
 	fyneApp fyne.App
+	window  fyne.Window
 	db      *gorm.DB
 
-	container       *fyne.Container
-	body            *fyne.Container
-	contentWrapper  *fyne.Container
-	activeView      View
-	previousView    View
-	mutateTaskView  *MutateTaskView
-	mutateTaskPopup *widget.PopUp
+	container      *fyne.Container
+	body           *fyne.Container
+	contentWrapper *fyne.Container
+	activeView     View
+	previousView   View
+	mutateTaskView *MutateTaskView
 }
 
-func newTaskApp(fyneApp fyne.App, db *gorm.DB) *TaskApp {
+func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
 	ta := TaskApp{
 		fyneApp: fyneApp,
+		window:  window,
 		db:      db,
 	}
 
@@ -108,15 +109,6 @@ func (ta *TaskApp) RenderMutateTaskModal(task *Task, taskList *TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 	ta.renderView(NewMutateTaskView(ta, task, taskList))
-}
-
-func (ta *TaskApp) CloseMutateTaskModal() {
-	ta.mu.Lock()
-	defer ta.mu.Unlock()
-	if ta.mutateTaskPopup != nil {
-		ta.mutateTaskPopup.Hide()
-	}
-	ta.mutateTaskView = nil
 }
 
 func (ta *TaskApp) Container() *fyne.Container {

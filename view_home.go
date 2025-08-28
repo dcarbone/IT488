@@ -37,7 +37,7 @@ func (v *HomeView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if v.foreground() {
-		todayBtn := NewWhiteTextButton("Today's List", func() {
+		todayBtn := widget.NewButton("Today's List", func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			go func() {
@@ -57,7 +57,7 @@ func (v *HomeView) Foreground() fyne.CanvasObject {
 		})
 		todayBtn.Importance = widget.MediumImportance
 
-		createListBtn := NewWhiteTextButton("Create List", v.app.RenderCreateListView)
+		createListBtn := widget.NewButton("Create List", v.app.RenderCreateListView)
 
 		return container.NewCenter(
 

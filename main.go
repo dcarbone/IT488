@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	_ "time/tzdata"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -67,12 +68,13 @@ func main() {
 
 	fyneApp := app.New()
 	logAppLifecycle(fyneApp)
-
-	taskApp := newTaskApp(fyneApp, db)
-
 	mainWindow := fyneApp.NewWindow("TODO Today")
-	mainWindow.Resize(fyne.NewSize(300, 700))
+
+	taskApp := newTaskApp(fyneApp, mainWindow, db)
+
 	mainWindow.SetContent(taskApp.Container())
+	mainWindow.SetFixedSize(true)
+	mainWindow.Resize(fyne.NewSize(300, 700))
 
 	listCount, err := CountModel[TaskList](ctx, taskApp.DB())
 	if err != nil {

@@ -26,31 +26,6 @@ func ThemeBackgroundColor() color.Color {
 	}
 }
 
-// WhiteTextButton is a button that forces its label text to white
-type WhiteTextButton struct {
-	widget.Button
-}
-
-func NewWhiteTextButton(label string, tapped func()) *WhiteTextButton {
-	btn := &WhiteTextButton{}
-	btn.ExtendBaseWidget(btn)
-	btn.Text = label
-	btn.OnTapped = tapped
-	return btn
-}
-
-func (b *WhiteTextButton) CreateRenderer() fyne.WidgetRenderer {
-	renderer := b.Button.CreateRenderer()
-
-	// Find the label inside renderer.Objects() and override its color
-	for _, obj := range renderer.Objects() {
-		if t, ok := obj.(*canvas.Text); ok {
-			t.Color = color.White
-		}
-	}
-	return renderer
-}
-
 var _ fyne.Theme = (*TodoTodayTheme)(nil)
 
 type TodoTodayTheme struct {
@@ -78,8 +53,22 @@ func HeaderCanvas(text string, opts ...func(txt *canvas.Text)) *canvas.Text {
 	txt := canvas.NewText(text, color.Black)
 	txt.Alignment = fyne.TextAlignCenter
 	txt.TextSize = 32
+	txt.TextStyle = fyne.TextStyle{
+		Bold: true,
+	}
 	for _, opt := range opts {
 		opt(txt)
 	}
 	return txt
+}
+
+func FormLabel(text string, opts ...func(lbl *widget.Label)) *widget.Label {
+	lbl := widget.NewLabel(text)
+	lbl.TextStyle = fyne.TextStyle{
+		Bold: true,
+	}
+	for _, opt := range opts {
+		opt(lbl)
+	}
+	return lbl
 }

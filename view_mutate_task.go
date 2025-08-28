@@ -44,6 +44,10 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		return nil
 	}
 
+	var (
+		content *fyne.Container
+	)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -123,12 +127,45 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	if v.task != nil && !v.task.DueDate.IsZero() {
 		chosenDueDate = v.task.DueDate
 	}
-	dtpLabel := canvas.NewText("Due Date", color.Black)
+	dtpLabel := FormLabel("Due Date:")
+	dueDateDisplay := widget.NewLabel(FormatDateTime(chosenDueDate))
+	var datePickerModal *widget.PopUp
 	dtp := datepicker.NewDateTimePicker(chosenDueDate, time.Sunday, func(t time.Time, b bool) {
 		chosenDueDate = t
+		dueDateDisplay.SetText(FormatDateTime(chosenDueDate))
 	})
+	dtpSaveBtn := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
+		dtp.OnActioned(true)
+		datePickerModal.Hide()
+	})
+	dtpContainer := container.NewBorder(
+		container.NewBorder(
+			nil,
+			nil,
+			nil,
+			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), func() {
+				datePickerModal.Hide()
+			}),
+		),
+		container.NewBorder(
+			nil,
+			nil,
+			nil,
+			dtpSaveBtn,
+		),
+		nil,
+		nil,
+		dtp,
+	)
+	datePickerModal = widget.NewModalPopUp(
+		dtpContainer,
+		v.app.window.Canvas(),
+	)
 
-	descLabel := canvas.NewText("Description:", color.Black)
+	dtpButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCalendar), datePickerModal.Show)
+	dueDateContainer := container.NewBorder(nil, nil, dueDateDisplay, dtpButton)
+
+	descLabel := FormLabel("Description:")
 	descInput := widget.NewMultiLineEntry()
 	if v.task != nil {
 		descInput.SetText(v.task.Description)
@@ -153,7 +190,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			statusSelect,
 
 			dtpLabel,
-			dtp,
+			dueDateContainer,
 
 			descLabel,
 			descInput,
@@ -188,7 +225,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		v.app.RenderPreviousView()
 	})
 
-	content := container.NewBorder(
+	content = container.NewBorder(
 		hdr,
 		ftr,
 		nil,
