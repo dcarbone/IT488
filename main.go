@@ -73,8 +73,6 @@ func main() {
 	taskApp := newTaskApp(fyneApp, mainWindow, db)
 
 	mainWindow.SetContent(taskApp.Container())
-	mainWindow.SetFixedSize(true)
-	mainWindow.Resize(fyne.NewSize(300, 700))
 
 	listCount, err := CountModel[TaskList](ctx, taskApp.DB())
 	if err != nil {
@@ -86,6 +84,9 @@ func main() {
 	} else {
 		taskApp.RenderHomeView()
 	}
+
+	mainWindow.SetFixedSize(true)
+	mainWindow.Resize(fyne.NewSize(300, 700))
 
 	// if context is cancelled, close app.
 	go func() {
