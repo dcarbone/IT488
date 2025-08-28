@@ -23,7 +23,7 @@ func NewHomeView(app *TaskApp) *HomeView {
 		baseView: newBaseView("home", app),
 	}
 
-	logo, err := GetFullSizeLogoPNG()
+	logo, err := GetConstrainedLogoPNG()
 	if err != nil {
 		panic(fmt.Sprintf("error reading logo: %v", err))
 	}

@@ -86,7 +86,7 @@ func main() {
 	}
 
 	mainWindow.SetFixedSize(true)
-	mainWindow.Resize(fyne.NewSize(300, 700))
+	mainWindow.Resize(fyne.NewSize(400, 700))
 
 	// if context is cancelled, close app.
 	go func() {
