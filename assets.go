@@ -50,9 +50,10 @@ func GetConstrainedLogoPNG() (image.Image, error) {
 
 	scale := float64(src.Bounds().Max.X) / 400
 
-	dst := image.NewRGBA(image.Rect(0, 0, int(float64(src.Bounds().Max.X)/scale), int(float64(src.Bounds().Max.Y)/scale)))
+	dst := image.NewRGBA(
+		image.Rect(0, 0, int(float64(src.Bounds().Max.X)/scale), int(float64(src.Bounds().Max.Y)/scale)),
+	)
 	draw.BiLinear.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
-	//draw.NearestNeighbor.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
 	return dst, nil
 }
 
