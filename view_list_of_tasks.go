@@ -2,18 +2,15 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 func buildListOfTasksList(app *TaskApp, tasks []Task, onDelete func()) fyne.CanvasObject {
-	var listOfTasks *widget.List
-	listOfTasks = widget.NewList(
+	return widget.NewList(
 		func() int {
 			return len(tasks)
 		},
@@ -29,23 +26,21 @@ func buildListOfTasksList(app *TaskApp, tasks []Task, onDelete func()) fyne.Canv
 			content.Add(container.NewBorder(
 				nil,
 				nil,
-
-				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
-					app.RenderMutateTaskModal(&task, nil)
-				}),
-
-				widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-					res := app.DB().Delete(&task)
-					if res.Error != nil {
-						panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, res.Error))
-					}
-					onDelete()
-				}),
-
-				canvas.NewText(task.Label, color.Black),
+				nil,
+				container.NewHBox(
+					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
+						app.RenderMutateTaskView(&task, nil)
+					}),
+					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
+						res := app.DB().Delete(&task)
+						if res.Error != nil {
+							panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, res.Error))
+						}
+						onDelete()
+					}),
+				),
+				widget.NewLabel(task.Label),
 			))
 		},
 	)
-
-	return listOfTasks
 }

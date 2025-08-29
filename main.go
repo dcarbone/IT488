@@ -80,7 +80,7 @@ func main() {
 	}
 
 	if listCount == 0 {
-		taskApp.RenderCreateListView()
+		taskApp.RenderMutateTaskListView(nil)
 	} else {
 		taskApp.RenderHomeView()
 	}

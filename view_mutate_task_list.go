@@ -15,11 +15,13 @@ var _ View = (*CreateTaskListView)(nil)
 
 type CreateTaskListView struct {
 	*baseView
+	taskList *TaskList
 }
 
-func NewCreateTaskListView(app *TaskApp) *CreateTaskListView {
+func NewMutateTaskListView(app *TaskApp, taskList *TaskList) *CreateTaskListView {
 	v := CreateTaskListView{
 		baseView: newBaseView("Create Task List", app),
+		taskList: taskList,
 	}
 	return &v
 }

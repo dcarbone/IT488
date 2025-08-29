@@ -47,7 +47,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	hdr := container.NewHBox(
 		HeaderCanvas(v.taskList.Label),
 		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderMutateTaskModal(nil, &v.taskList)
+			v.app.RenderMutateTaskView(nil, &v.taskList)
 		}),
 	)
 

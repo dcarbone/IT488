@@ -1,0 +1,101 @@
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
+)
+
+var _ View = (*TaskListsView)(nil)
+
+type TaskListsView struct {
+	*baseView
+}
+
+func NewTaskListsView(ta *TaskApp) *TaskListsView {
+	v := TaskListsView{
+		baseView: newBaseView("Task Lists", ta),
+	}
+	return &v
+}
+
+func (v *TaskListsView) Foreground() fyne.CanvasObject {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	if !v.foreground() {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-v.deactivated
+		cancel()
+	}()
+
+	listCount, err := CountModel[TaskList](ctx, v.app.DB())
+	if err != nil {
+		panic(fmt.Sprintf("Error counting task lists: %v", err))
+	}
+
+	taskLists, err := FindModel[TaskList](ctx, v.app.DB())
+	if err != nil {
+		panic(fmt.Sprintf("Error fetching tasks: %v", err))
+	}
+
+	listView := widget.NewList(
+		func() int {
+			return int(listCount)
+		},
+		func() fyne.CanvasObject {
+			return container.NewStack(widget.NewLabel("Loading..."))
+		},
+		func(id widget.ListItemID, object fyne.CanvasObject) {
+			taskList := taskLists[id]
+
+			content := object.(*fyne.Container)
+
+			content.RemoveAll()
+			content.Add(container.NewBorder(
+				nil,
+				nil,
+				nil,
+				container.NewHBox(
+					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
+						v.app.RenderTaskListView(taskList)
+					}),
+					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
+						v.app.RenderMutateTaskListView(&taskList)
+					}),
+					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
+						res := v.app.DB().Delete(&taskList)
+						if res.Error != nil {
+							panic(fmt.Sprintf("Error deleting task list %d: %v", taskList.ID, err))
+						}
+						v.app.RenderTaskListsView()
+					}),
+				),
+				widget.NewLabel(taskList.Label),
+			))
+		},
+	)
+
+	return container.NewBorder(
+		nil,
+		nil,
+		nil,
+		nil,
+		listView,
+	)
+}
+
+func (v *TaskListsView) Background() {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.background()
+}

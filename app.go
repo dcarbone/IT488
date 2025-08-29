@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"gorm.io/gorm"
 )
@@ -37,7 +38,8 @@ type TaskApp struct {
 	contentWrapper *fyne.Container
 	activeView     View
 	previousView   View
-	mutateTaskView *MutateTaskView
+
+	showNavBtn *widget.Button
 }
 
 func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
@@ -51,8 +53,12 @@ func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
 
 	ta.contentWrapper = container.NewStack()
 
+	ta.showNavBtn = widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
+		ta.RenderNavigation()
+	})
+
 	ta.body = container.NewBorder(
-		nil,
+		container.NewHBox(ta.showNavBtn),
 		widget.NewButton("Quit", func() { fyneApp.Quit() }),
 		nil,
 		nil,
@@ -72,6 +78,9 @@ func (ta *TaskApp) renderView(view View) {
 		ta.activeView.Background()
 		ta.previousView = ta.activeView
 	}
+	if ta.showNavBtn.Hidden {
+		ta.showNavBtn.Show()
+	}
 	ta.contentWrapper.RemoveAll()
 	ta.activeView = view
 	ta.contentWrapper.Add(ta.activeView.Foreground())
@@ -87,16 +96,29 @@ func (ta *TaskApp) RenderPreviousView() {
 	}
 }
 
+func (ta *TaskApp) RenderNavigation() {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	ta.renderView(NewNavigationView(ta))
+	ta.showNavBtn.Hide()
+}
+
 func (ta *TaskApp) RenderHomeView() {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 	ta.renderView(NewHomeView(ta))
 }
 
-func (ta *TaskApp) RenderCreateListView() {
+func (ta *TaskApp) RenderMutateTaskListView(taskList *TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-	ta.renderView(NewCreateTaskListView(ta))
+	ta.renderView(NewMutateTaskListView(ta, taskList))
+}
+
+func (ta *TaskApp) RenderTaskListsView() {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	ta.renderView(NewTaskListsView(ta))
 }
 
 func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
@@ -105,7 +127,7 @@ func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
 	ta.renderView(NewTaskListView(ta, taskList))
 }
 
-func (ta *TaskApp) RenderMutateTaskModal(task *Task, taskList *TaskList) {
+func (ta *TaskApp) RenderMutateTaskView(task *Task, taskList *TaskList) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
 	ta.renderView(NewMutateTaskView(ta, task, taskList))
