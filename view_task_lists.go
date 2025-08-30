@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
 )
 
 var _ View = (*TaskListsView)(nil)
@@ -67,7 +68,9 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 				nil,
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
-						v.app.RenderTaskListView(taskList)
+						v.app.RenderTaskListView(taskList.Label, func(db *gorm.DB) *gorm.DB {
+							return db.Where("task_list_id = ?", taskList.ID)
+						})
 					}),
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
 						v.app.RenderMutateTaskListView(&taskList)

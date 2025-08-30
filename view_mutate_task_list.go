@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
 )
 
 var _ View = (*CreateTaskListView)(nil)
@@ -96,7 +97,9 @@ func (v *CreateTaskListView) render(err error) fyne.CanvasObject {
 			}
 
 			v.mu.Unlock()
-			v.app.RenderTaskListView(tl)
+			v.app.RenderTaskListView(tl.Label, func(db *gorm.DB) *gorm.DB {
+				return db.Where("task_list_id = ?", tl.ID)
+			})
 		},
 	)
 

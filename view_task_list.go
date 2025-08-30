@@ -9,21 +9,19 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
 )
 
 var _ View = (*TaskListView)(nil)
 
 type TaskListView struct {
 	*baseView
-	taskList TaskList
+	opts []ModelQueryOpt
 }
 
-func NewTaskListView(app *TaskApp, taskList TaskList) *TaskListView {
+func NewTaskListView(app *TaskApp, title string, opts ...ModelQueryOpt) *TaskListView {
 	v := TaskListView{
-		baseView: newBaseView(fmt.Sprintf("Task List %s", taskList.Label), app),
-		taskList: taskList,
+		baseView: newBaseView(title, app),
+		opts:     opts,
 	}
 	return &v
 }
@@ -45,45 +43,36 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	}()
 
 	hdr := container.NewHBox(
-		HeaderCanvas(v.taskList.Label),
-		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderMutateTaskView(nil, &v.taskList)
-		}),
+	//HeaderCanvas(v.taskList.Label),
+	//widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
+	//	v.app.RenderMutateTaskView(nil, &v.taskList)
+	//}),
 	)
 
-	log.Debug("Counting tasks...", "task_list", v.taskList.Label)
-	taskCount, err := CountAssociation[TaskList](ctx, v.app.DB(), v.taskList, "Tasks")
+	taskCount, err := CountModel[Task](ctx, v.app.DB(), v.opts...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return nil
 		}
-		log.Error("Error counting tasks in list", "list", v.taskList.Label, "err", err)
-		panic(fmt.Sprintf("Error counting tasks in list %q: %v", v.taskList.Label, err))
+		panic(fmt.Sprintf("Error counting tasks: %v", err))
 	}
-
-	log.Debug("Got task count", "task_list", v.taskList.Label, "count", taskCount)
 
 	ftr := canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black)
 
-	log.Debug("Finding tasks...", "task_list", v.taskList.Label)
-
-	tasks, err := FindAssociation[TaskList, Task](ctx, v.app.DB(), v.taskList, "Tasks")
+	tasks, err := FindModel[Task](ctx, v.app.DB(), v.opts...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return nil
 		}
-		log.Error("Error finding tasks in list", "list", v.taskList.Label, "err", err)
-		panic(fmt.Sprintf("Error finding tasks in list %q: %v", v.taskList.Label, err))
+		panic(fmt.Sprintf("Error finding tasks: %v", err))
 	}
-
-	log.Debug("Found tasks", "task_list", v.taskList.Label, "task_count", len(tasks))
 
 	return container.NewBorder(
 		hdr,
 		ftr,
 		nil,
 		nil,
-		buildListOfTasksList(v.app, tasks, func() { v.app.RenderTaskListView(v.taskList) }),
+		buildListOfTasksList(v.app, tasks, func() { v.app.RenderTaskListView(v.Name(), v.opts...) }),
 	)
 }
 

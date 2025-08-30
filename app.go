@@ -121,10 +121,10 @@ func (ta *TaskApp) RenderTaskListsView() {
 	ta.renderView(NewTaskListsView(ta))
 }
 
-func (ta *TaskApp) RenderTaskListView(taskList TaskList) {
+func (ta *TaskApp) RenderTaskListView(title string, opts ...ModelQueryOpt) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-	ta.renderView(NewTaskListView(ta, taskList))
+	ta.renderView(NewTaskListView(ta, title, opts...))
 }
 
 func (ta *TaskApp) RenderMutateTaskView(task *Task, taskList *TaskList) {

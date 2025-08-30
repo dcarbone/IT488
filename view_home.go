@@ -56,7 +56,7 @@ func (v *HomeView) Foreground() fyne.CanvasObject {
 			v.app.RenderMutateTaskListView(nil)
 			return
 		}
-		v.app.RenderTaskListView(*latestList)
+		v.app.RenderTaskListView("Today's List", todaysTasksModelQueryOpt())
 	})
 	todayBtn.Importance = widget.MediumImportance
 
