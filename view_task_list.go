@@ -9,6 +9,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 var _ View = (*TaskListView)(nil)
@@ -48,13 +50,6 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		cancel()
 	}()
 
-	hdr := container.NewHBox(
-	//HeaderCanvas(v.taskList.Label),
-	//widget.NewButtonWithIcon("", theme.Icon(theme.IconNameContentAdd), func() {
-	//	v.app.RenderMutateTaskView(nil, &v.taskList)
-	//}),
-	)
-
 	taskCount, err := CountModel[Task](ctx, v.app.DB(), v.opts...)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
@@ -63,7 +58,14 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 		panic(fmt.Sprintf("Error counting tasks: %v", err))
 	}
 
-	ftr := canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black)
+	ftr := container.NewBorder(
+		nil,
+		nil,
+		canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black),
+		widget.NewButtonWithIcon("New task", theme.Icon(theme.IconNameContentAdd), func() {
+			v.app.RenderMutateTaskView(nil, nil)
+		}),
+	)
 
 	tasks, err := FindModel[Task](ctx, v.app.DB(), v.opts...)
 	if err != nil {
@@ -74,7 +76,7 @@ func (v *TaskListView) Foreground() fyne.CanvasObject {
 	}
 
 	return container.NewBorder(
-		hdr,
+		nil,
 		ftr,
 		nil,
 		nil,
