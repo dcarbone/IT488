@@ -51,6 +51,9 @@ func (v *NavigationView) Foreground() fyne.CanvasObject {
 				widget.NewButton("Task Lists", func() {
 					v.app.RenderTaskListsView()
 				}),
+				widget.NewButton("All Tasks", func() {
+					v.app.RenderTaskListView("All tasks")
+				}),
 			),
 		),
 	)
