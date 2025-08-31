@@ -20,6 +20,10 @@ func NewNavigationView(ta *TaskApp) *NavigationView {
 	return &v
 }
 
+func (v *NavigationView) Title() string {
+	return "Navigation"
+}
+
 func (v *NavigationView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
 	defer v.mu.Unlock()

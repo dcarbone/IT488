@@ -15,15 +15,21 @@ var _ View = (*TaskListView)(nil)
 
 type TaskListView struct {
 	*baseView
-	opts []ModelQueryOpt
+	title string
+	opts  []ModelQueryOpt
 }
 
 func NewTaskListView(app *TaskApp, title string, opts ...ModelQueryOpt) *TaskListView {
 	v := TaskListView{
-		baseView: newBaseView(title, app),
+		baseView: newBaseView("Task List View", app),
+		title:    title,
 		opts:     opts,
 	}
 	return &v
+}
+
+func (v *TaskListView) Title() string {
+	return v.title
 }
 
 func (v *TaskListView) Foreground() fyne.CanvasObject {

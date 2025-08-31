@@ -40,6 +40,7 @@ type TaskApp struct {
 	previousView   View
 
 	showNavBtn *widget.Button
+	viewTitle  *canvas.Text
 }
 
 func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
@@ -51,14 +52,15 @@ func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
 
 	fyneApp.Settings().SetTheme(NewTheme())
 
-	ta.contentWrapper = container.NewStack()
-
 	ta.showNavBtn = widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
 		ta.RenderNavigation()
 	})
+	ta.viewTitle = HeaderCanvas("")
+
+	ta.contentWrapper = container.NewStack()
 
 	ta.body = container.NewBorder(
-		container.NewHBox(ta.showNavBtn),
+		container.NewHBox(ta.showNavBtn, ta.viewTitle),
 		widget.NewButton("Quit", func() { fyneApp.Quit() }),
 		nil,
 		nil,
@@ -83,6 +85,7 @@ func (ta *TaskApp) renderView(view View) {
 	}
 	ta.contentWrapper.RemoveAll()
 	ta.activeView = view
+	ta.viewTitle.Text = view.Title()
 	ta.contentWrapper.Add(ta.activeView.Foreground())
 }
 

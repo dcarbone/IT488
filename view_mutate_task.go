@@ -18,7 +18,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var _ View = (*MutateTaskView)(nil)
+var (
+	_ View = (*MutateTaskView)(nil)
+
+	taskSelectRe = regexp.MustCompile("\\((\\d+)\\)$")
+)
 
 type MutateTaskView struct {
 	*baseView
@@ -35,7 +39,12 @@ func NewMutateTaskView(app *TaskApp, task *Task, taskList *TaskList) *MutateTask
 	return &v
 }
 
-var taskSelectRe = regexp.MustCompile("\\((\\d+)\\)$")
+func (v *MutateTaskView) Title() string {
+	if v.task == nil {
+		return "Create new task"
+	}
+	return fmt.Sprintf("Edit task %s", v.task.Label)
+}
 
 func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"time"
 
@@ -12,22 +13,29 @@ import (
 	"gorm.io/gorm"
 )
 
-var _ View = (*CreateTaskListView)(nil)
+var _ View = (*MutateTaskListView)(nil)
 
-type CreateTaskListView struct {
+type MutateTaskListView struct {
 	*baseView
 	taskList *TaskList
 }
 
-func NewMutateTaskListView(app *TaskApp, taskList *TaskList) *CreateTaskListView {
-	v := CreateTaskListView{
+func NewMutateTaskListView(app *TaskApp, taskList *TaskList) *MutateTaskListView {
+	v := MutateTaskListView{
 		baseView: newBaseView("Create Task List", app),
 		taskList: taskList,
 	}
 	return &v
 }
 
-func (v *CreateTaskListView) Foreground() fyne.CanvasObject {
+func (v *MutateTaskListView) Title() string {
+	if v.taskList == nil {
+		return "Create task list"
+	}
+	return fmt.Sprintf("Edit task list %s", v.taskList.Label)
+}
+
+func (v *MutateTaskListView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if v.foreground() {
@@ -36,13 +44,13 @@ func (v *CreateTaskListView) Foreground() fyne.CanvasObject {
 	return nil
 }
 
-func (v *CreateTaskListView) Background() {
+func (v *MutateTaskListView) Background() {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	v.background()
 }
 
-func (v *CreateTaskListView) render(err error) fyne.CanvasObject {
+func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 	content := container.NewVBox()
 
 	hdr := canvas.NewText("Create New List", color.Black)
@@ -108,7 +116,7 @@ func (v *CreateTaskListView) render(err error) fyne.CanvasObject {
 	return content
 }
 
-func (v *CreateTaskListView) createList(name, description string) (TaskList, error) {
+func (v *MutateTaskListView) createList(name, description string) (TaskList, error) {
 	tl := TaskList{
 		Label:       name,
 		Date:        time.Now(),

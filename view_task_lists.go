@@ -24,6 +24,10 @@ func NewTaskListsView(ta *TaskApp) *TaskListsView {
 	return &v
 }
 
+func (v *TaskListsView) Title() string {
+	return "Task lists"
+}
+
 func (v *TaskListsView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
 	defer v.mu.Unlock()

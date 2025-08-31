@@ -16,6 +16,7 @@ const (
 
 type View interface {
 	Name() string
+	Title() string
 	State() ViewState
 	Foreground() fyne.CanvasObject
 	Background()

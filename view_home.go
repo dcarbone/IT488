@@ -33,6 +33,10 @@ func NewHomeView(app *TaskApp) *HomeView {
 	return &v
 }
 
+func (v *HomeView) Title() string {
+	return ""
+}
+
 func (v *HomeView) Foreground() fyne.CanvasObject {
 	v.mu.Lock()
 	defer v.mu.Unlock()
