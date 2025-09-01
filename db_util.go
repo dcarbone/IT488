@@ -91,6 +91,7 @@ func FindAssociation[T, E any](ctx context.Context, db *gorm.DB, base T, column 
 
 func todaysTasksModelQueryOpt() ModelQueryOpt {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("date(`tasks`.`due_date`, 'localtime') = date('now', 'localtime')")
+		return WithSort("due_date asc")(WithSort("id asc")(WithPreload("TaskList")(db))).
+			Where("date(`tasks`.`due_date`, 'localtime') = date('now', 'localtime')")
 	}
 }

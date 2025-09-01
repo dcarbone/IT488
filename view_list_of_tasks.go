@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"image/color"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-func buildListOfTasksList(app *TaskApp, tasks []Task, onDelete func()) fyne.CanvasObject {
+func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDelete func()) fyne.CanvasObject {
 	return widget.NewList(
 		func() int {
 			return len(tasks)
@@ -29,7 +33,11 @@ func buildListOfTasksList(app *TaskApp, tasks []Task, onDelete func()) fyne.Canv
 				nil,
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
-						app.RenderMutateTaskView(&task, nil)
+						if taskList != nil {
+							app.RenderMutateTaskView(&task, taskList)
+						} else {
+							app.RenderMutateTaskView(&task, task.TaskList)
+						}
 					}),
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
 						res := app.DB().Delete(&task)
@@ -43,4 +51,88 @@ func buildListOfTasksList(app *TaskApp, tasks []Task, onDelete func()) fyne.Canv
 			))
 		},
 	)
+}
+
+var _ View = (*ListOfTasksView)(nil)
+
+type ListOfTasksView struct {
+	*baseView
+	title    string
+	taskList *TaskList
+	opts     []ModelQueryOpt
+}
+
+func NewListOfTasksView(app *TaskApp, title string, taskList *TaskList, opts ...ModelQueryOpt) *ListOfTasksView {
+	v := ListOfTasksView{
+		baseView: newBaseView("Task List View", app),
+		title:    title,
+		taskList: taskList,
+		opts:     append(opts, WithPreload("TaskList")),
+	}
+	return &v
+}
+
+func (v *ListOfTasksView) Title() string {
+	return v.title
+}
+
+func (v *ListOfTasksView) Foreground() fyne.CanvasObject {
+	v.mu.Lock()
+	if !v.foreground() {
+		v.mu.Unlock()
+		return nil
+	}
+	v.mu.Unlock()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-v.deactivated
+		cancel()
+	}()
+
+	taskCount, err := CountModel[Task](ctx, v.app.DB(), v.opts...)
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
+		panic(fmt.Sprintf("Error counting tasks: %v", err))
+	}
+
+	ftr := container.NewBorder(
+		nil,
+		nil,
+		canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black),
+		widget.NewButtonWithIcon("New task", theme.Icon(theme.IconNameContentAdd), func() {
+			v.app.RenderMutateTaskView(nil, nil)
+		}),
+	)
+
+	tasks, err := FindModel[Task](ctx, v.app.DB(), v.opts...)
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
+		panic(fmt.Sprintf("Error finding tasks: %v", err))
+	}
+
+	return container.NewBorder(
+		nil,
+		ftr,
+		nil,
+		nil,
+		buildListOfTasksList(
+			v.app,
+			v.taskList,
+			tasks,
+			func() { v.app.RenderListOfTasksView(v.Name(), v.taskList, v.opts...) },
+		),
+	)
+}
+
+func (v *ListOfTasksView) Background() {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.background()
 }

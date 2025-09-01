@@ -105,7 +105,7 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 			}
 
 			v.mu.Unlock()
-			v.app.RenderTaskListView(tl.Label, func(db *gorm.DB) *gorm.DB {
+			v.app.RenderListOfTasksView(tl.Label, v.taskList, func(db *gorm.DB) *gorm.DB {
 				return db.Where("task_list_id = ?", tl.ID)
 			})
 		},

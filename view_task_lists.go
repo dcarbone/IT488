@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"image/color"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -72,7 +74,7 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 				nil,
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
-						v.app.RenderTaskListView(taskList.Label, func(db *gorm.DB) *gorm.DB {
+						v.app.RenderListOfTasksView(taskList.Label, &taskList, func(db *gorm.DB) *gorm.DB {
 							return db.Where("task_list_id = ?", taskList.ID)
 						})
 					}),
@@ -92,9 +94,18 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 		},
 	)
 
+	ftr := container.NewBorder(
+		nil,
+		nil,
+		canvas.NewText(fmt.Sprintf("Total lists: %d", listCount), color.Black),
+		widget.NewButtonWithIcon("New list", theme.Icon(theme.IconNameContentAdd), func() {
+			v.app.RenderMutateTaskListView(nil)
+		}),
+	)
+
 	return container.NewBorder(
 		nil,
-		nil,
+		ftr,
 		nil,
 		nil,
 		listView,
