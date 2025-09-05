@@ -4,18 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
+	"fyne.io/fyne/v2/canvas"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	glogger "gorm.io/gorm/logger"
 )
 
 var (
-	taskPrioritySrc atomic.Uint64
+	taskOrderSrc atomic.Uint64
 )
+
+func GetNextTaskOrderNum() uint {
+	return uint(taskOrderSrc.Add(1))
+}
 
 type gormLogger struct {
 	logMode glogger.LogLevel
@@ -82,7 +86,7 @@ func openDB(dbFile string, logDebug bool) (*gorm.DB, error) {
 		panic(fmt.Sprintf("Error finding highest task priority: %v", err))
 	}
 
-	taskPrioritySrc.Store(uint64(highestPriority.V))
+	taskOrderSrc.Store(uint64(highestPriority.V))
 
 	log.Debug("Found highest task priority", "task_priority", highestPriority)
 
@@ -100,22 +104,6 @@ func tryCloseDB(db *gorm.DB) {
 	_ = sdb.Close()
 }
 
-const (
-	TaskStatusTodo       = "todo"
-	TaskStatusInProgress = "in progress"
-	TaskStatusCompleted  = "completed"
-	TaskStatusSkip       = "skip"
-)
-
-var (
-	TaskStatuses = []string{
-		strings.ToTitle(string(TaskStatusTodo)),
-		strings.ToTitle(string(TaskStatusInProgress)),
-		strings.ToTitle(string(TaskStatusCompleted)),
-		strings.ToTitle(string(TaskStatusSkip)),
-	}
-)
-
 type TaskList struct {
 	gorm.Model
 	Label       string `gorm:"not null"`
@@ -129,9 +117,25 @@ type Task struct {
 	Label       string `gorm:"not null"`
 	Description string
 	Status      string
-	Priority    uint `gorm:"unique;not null"`
-	DueDate     time.Time
+
+	// Priority is actually used as a priority _within tasks_, not user-defined priority.
+	// Its a poorly named column.
+	Priority uint `gorm:"unique;not null"`
+
+	UserPriority uint `gorm:"default:20;not null"`
+
+	DueDate time.Time
 
 	TaskListID int
 	TaskList   *TaskList
+}
+
+func (t Task) PriorityIcon() *canvas.Image {
+	return GetAssetImageCanvas(
+		GetConstrainedImage(
+			TaskPriorityImage(
+				TaskPriorityName(t.UserPriority)),
+			100,
+		),
+	)
 }

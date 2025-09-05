@@ -23,12 +23,7 @@ func NewHomeView(app *TaskApp) *HomeView {
 		baseView: newBaseView("home", app),
 	}
 
-	logo, err := GetConstrainedLogoPNG()
-	if err != nil {
-		panic(fmt.Sprintf("error reading logo: %v", err))
-	}
-	v.logoImg = canvas.NewImageFromImage(logo)
-	v.logoImg.FillMode = canvas.ImageFillOriginal
+	v.logoImg = GetAssetImageCanvas(GetConstrainedImage(AssetImageLogo, 400))
 
 	return &v
 }

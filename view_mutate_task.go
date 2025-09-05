@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/sdassow/fyne-datepicker"
@@ -76,17 +77,6 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		listNames = append(listNames, fmt.Sprintf("%s (%d)", tl.Label, tl.ID))
 	}
 
-	var title fyne.CanvasObject
-	if v.task != nil {
-		title = HeaderCanvas("Edit Task")
-	} else {
-		title = HeaderCanvas("Create New Task")
-	}
-	hdr := container.NewHBox(
-		title,
-		widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), v.app.RenderPreviousView),
-	)
-
 	titleLabel := canvas.NewText("Title", color.Black)
 	titleInput := widget.NewEntry()
 	if v.task != nil {
@@ -126,11 +116,40 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	if v.task != nil {
 		chosenStatus = v.task.Status
 	}
-	statusSelectLabel := canvas.NewText("Status", color.Black)
+	statusSelectLabel := widget.NewLabel("Status")
 	statusSelect := widget.NewSelect(TaskStatuses, func(s string) {
 		chosenStatus = strings.ToLower(s)
 	})
 	statusSelect.Selected = strings.ToTitle(chosenStatus)
+
+	var priorityContainer *fyne.Container
+	chosenPriority := TaskPriorityHigh
+	chosenPriorityImageContainer := container.NewStack(
+		GetAssetImageCanvas(
+			GetConstrainedImage(TaskPriorityImage(chosenPriority), 50),
+		),
+	)
+	if v.task != nil {
+		chosenPriority = TaskPriorityName(v.task.UserPriority)
+	}
+	prioritySelectLabel := widget.NewLabel("Priority")
+	prioritySelect := widget.NewSelect(TaskPriorities, func(s string) {
+		chosenPriority = strings.ToLower(s)
+		chosenPriorityImageContainer.RemoveAll()
+		chosenPriorityImageContainer.Add(
+			GetAssetImageCanvas(
+				GetConstrainedImage(TaskPriorityImage(chosenPriority), 50),
+			),
+		)
+	})
+	prioritySelect.Selected = strings.ToTitle(chosenPriority)
+	priorityContainer = container.NewBorder(
+		nil,
+		nil,
+		nil,
+		chosenPriorityImageContainer,
+		prioritySelect,
+	)
 
 	chosenDueDate := time.Now()
 	if v.task != nil && !v.task.DueDate.IsZero() {
@@ -198,6 +217,9 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			statusSelectLabel,
 			statusSelect,
 
+			prioritySelectLabel,
+			priorityContainer,
+
 			dtpLabel,
 			dueDateContainer,
 
@@ -206,36 +228,42 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		),
 	)
 
-	ftr := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
-		var res *gorm.DB
-		if v.task != nil {
-			v.task.Label = titleInput.Text
-			v.task.Description = descInput.Text
-			v.task.Status = chosenStatus
-			v.task.TaskList = chosenTaskList
-			v.task.DueDate = chosenDueDate
-			res = v.app.DB().Updates(v.task)
-		} else {
-			task := Task{
-				Label:       titleInput.Text,
-				Description: descInput.Text,
-				Status:      chosenStatus,
-				TaskList:    chosenTaskList,
-				DueDate:     chosenDueDate,
-				Priority:    uint(taskPrioritySrc.Add(1)),
+	ftr := container.NewHBox(
+		layout.NewSpacer(),
+		widget.NewButtonWithIcon("Cancel", theme.Icon(theme.IconNameCancel), v.app.RenderPreviousView),
+		widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
+			var res *gorm.DB
+			if v.task != nil {
+				v.task.Label = titleInput.Text
+				v.task.Description = descInput.Text
+				v.task.Status = chosenStatus
+				v.task.UserPriority = TaskPriorityNumber(chosenPriority)
+				v.task.TaskList = chosenTaskList
+				v.task.DueDate = chosenDueDate
+				res = v.app.DB().Updates(v.task)
+			} else {
+				task := Task{
+					Label:        titleInput.Text,
+					Description:  descInput.Text,
+					Status:       chosenStatus,
+					UserPriority: TaskPriorityNumber(chosenPriority),
+					TaskList:     chosenTaskList,
+					DueDate:      chosenDueDate,
+					Priority:     GetNextTaskOrderNum(),
+				}
+				res = v.app.DB().Create(&task)
 			}
-			res = v.app.DB().Create(&task)
-		}
-		if res.Error != nil {
-			log.Error("Error saving task", "err", res.Error)
-			panic(fmt.Sprintf("Error saving task: %v", res.Error))
-		}
+			if res.Error != nil {
+				log.Error("Error saving task", "err", res.Error)
+				panic(fmt.Sprintf("Error saving task: %v", res.Error))
+			}
 
-		v.app.RenderPreviousView()
-	})
+			v.app.RenderPreviousView()
+		}),
+	)
 
 	content = container.NewBorder(
-		hdr,
+		nil,
 		ftr,
 		nil,
 		nil,

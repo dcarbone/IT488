@@ -68,7 +68,7 @@ func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
 	)
 
 	ta.container = container.NewStack(
-		canvas.NewRectangle(ThemeBackgroundColor()),
+		canvas.NewRectangle(ColorBackground),
 		ta.body,
 	)
 

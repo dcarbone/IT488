@@ -9,22 +9,16 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const (
-	ThemeBackgroundColorHex = "#f2df79"
-	ThemeBackgroundColorRGB = "rgb(242, 223, 121)"
-)
-
 var (
 	ColorRed = color.RGBA{R: 255}
-)
 
-func ThemeBackgroundColor() color.Color {
-	return color.RGBA{
-		R: 242,
-		G: 223,
-		B: 121,
-	}
-}
+	ColorBackground = color.RGBA{R: 242, G: 223, B: 121} // F2DF79
+	ColorBlue       = color.RGBA{R: 11, G: 2, B: 133}    // 0B0285
+	ColorPurple     = color.RGBA{R: 139, G: 129, B: 253} // 8B81FD
+	ColorPink       = color.RGBA{R: 227, G: 204, B: 252} // E3CCFC
+	ColorYellow     = color.RGBA{R: 221, G: 253, B: 204} // DDFDCC
+	ColorGreen      = color.RGBA{R: 2, G: 116, B: 102}   // 027466
+)
 
 var _ fyne.Theme = (*TodoTodayTheme)(nil)
 
@@ -42,7 +36,7 @@ func NewTheme() *TodoTodayTheme {
 func (th *TodoTodayTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
-		return ThemeBackgroundColor()
+		return ColorBackground
 
 	default:
 		return th.Theme.Color(name, theme.VariantLight)

@@ -47,7 +47,10 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 						onDelete()
 					}),
 				),
-				widget.NewLabel(task.Label),
+				container.NewHBox(
+					task.PriorityIcon(),
+					widget.NewLabel(task.Label),
+				),
 			))
 		},
 	)
