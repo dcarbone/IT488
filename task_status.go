@@ -6,26 +6,22 @@ import (
 )
 
 const (
-	TaskStatusTodo       = "todo"
-	TaskStatusInProgress = "in progress"
-	TaskStatusCompleted  = "completed"
-	TaskStatusSkip       = "skip"
+	TaskStatusTodo = "todo"
+	TaskStatusDone = "done"
+	TaskStatusSkip = "skip"
 )
 
 var (
 	TaskStatuses = []string{
 		strings.ToTitle(TaskStatusTodo),
-		strings.ToTitle(TaskStatusInProgress),
-		strings.ToTitle(TaskStatusCompleted),
+		strings.ToTitle(TaskStatusDone),
 		strings.ToTitle(TaskStatusSkip),
 	}
 )
 
 func TaskStatusImage(status string) image.Image {
 	switch strings.ToLower(status) {
-	case TaskStatusInProgress:
-		return AssetImageStatusInProgress
-	case TaskStatusCompleted:
+	case TaskStatusDone:
 		return AssetImageStatusDone
 	case TaskStatusSkip:
 		return AssetImageStatusSkip

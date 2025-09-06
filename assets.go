@@ -26,10 +26,9 @@ var (
 	AssetImagePriorityHigh    = MustGetAssetImage("high_priority.png")
 	AssetImagePriorityHighest = MustGetAssetImage("highest_priority.png")
 
-	AssetImageStatusTodo       = MustGetAssetImage("status_todo.png")
-	AssetImageStatusInProgress = MustGetAssetImage("status_in_progress.png")
-	AssetImageStatusDone       = MustGetAssetImage("status_done.png")
-	AssetImageStatusSkip       = MustGetAssetImage("status_skip.png")
+	AssetImageStatusTodo = MustGetAssetImage("status_todo.png")
+	AssetImageStatusDone = MustGetAssetImage("status_done.png")
+	AssetImageStatusSkip = MustGetAssetImage("status_skip.png")
 )
 
 func GetAssetFile(name string) (fs.File, error) {

@@ -26,11 +26,46 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 
 			content := object.(*fyne.Container)
 
+			//chosenStatus := task.Status
+			//
+			//statusPickerModal := widget.NewModalPopUp(
+			//	container.NewVScroll(
+			//		widget.NewList(
+			//			func() int {
+			//				return len(TaskStatuses)
+			//			},
+			//			func() fyne.CanvasObject {
+			//				return container.NewStack()
+			//			},
+			//			func(id widget.ListItemID, object fyne.CanvasObject) {
+			//				content := object.(*fyne.Container)
+			//				content.RemoveAll()
+			//				content.Add(
+			//					container.NewHBox(
+			//						GetAssetImageCanvas(
+			//							GetConstrainedImage(
+			//								TaskStatusImage(TaskStatuses[id]),
+			//								100,
+			//							),
+			//						),
+			//					),
+			//				)
+			//			},
+			//		),
+			//	),
+			//	app.window.Canvas(),
+			//)
+
 			content.RemoveAll()
 			content.Add(container.NewBorder(
 				nil,
 				nil,
-				nil,
+				GetAssetImageCanvas(
+					GetConstrainedImage(
+						TaskStatusImage(task.Status),
+						50,
+					),
+				),
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
 						if taskList != nil {
