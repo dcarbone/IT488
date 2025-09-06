@@ -46,13 +46,13 @@ func (v *NavigationView) Foreground() fyne.CanvasObject {
 		container.NewVScroll(
 			container.NewVBox(
 				widget.NewButton("Today's Tasks", func() {
-					v.app.RenderListOfTasksView("Today's List", nil, todaysTasksModelQueryOpt())
+					v.app.RenderListOfTasksView("Today's Tasks", nil, todaysTasksModelQueryOpt())
 				}),
 				widget.NewButton("Task Lists", func() {
 					v.app.RenderTaskListsView()
 				}),
 				widget.NewButton("All Tasks", func() {
-					v.app.RenderListOfTasksView("All tasks", nil)
+					v.app.RenderListOfTasksView("All Tasks", nil)
 				}),
 			),
 		),

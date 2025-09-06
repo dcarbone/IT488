@@ -143,7 +143,7 @@ func (v *ListOfTasksView) Foreground() fyne.CanvasObject {
 		nil,
 		canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black),
 		widget.NewButtonWithIcon("New task", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderMutateTaskView(nil, nil)
+			v.app.RenderMutateTaskView(nil, v.taskList)
 		}),
 	)
 
