@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -22,50 +23,74 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 			return container.NewStack(widget.NewLabel("Loading..."))
 		},
 		func(id widget.ListItemID, object fyne.CanvasObject) {
+			var statusPickerModal *widget.PopUp
+
 			task := tasks[id]
 
 			content := object.(*fyne.Container)
 
-			//chosenStatus := task.Status
-			//
-			//statusPickerModal := widget.NewModalPopUp(
-			//	container.NewVScroll(
-			//		widget.NewList(
-			//			func() int {
-			//				return len(TaskStatuses)
-			//			},
-			//			func() fyne.CanvasObject {
-			//				return container.NewStack()
-			//			},
-			//			func(id widget.ListItemID, object fyne.CanvasObject) {
-			//				content := object.(*fyne.Container)
-			//				content.RemoveAll()
-			//				content.Add(
-			//					container.NewHBox(
-			//						GetAssetImageCanvas(
-			//							GetConstrainedImage(
-			//								TaskStatusImage(TaskStatuses[id]),
-			//								100,
-			//							),
-			//						),
-			//					),
-			//				)
-			//			},
-			//		),
-			//	),
-			//	app.window.Canvas(),
-			//)
+			statusIcon := NewTappableIcon(TaskStatusResource(task.Status), func(ev *fyne.PointEvent) {
+				statusPickerModal.Show()
+			})
+
+			var pickedStatus string
+			statusPickerList := widget.NewList(
+				func() int {
+					return len(TaskStatuses)
+				},
+				func() fyne.CanvasObject {
+					return container.NewStack(widget.NewLabel("Loading..."))
+				},
+				func(id widget.ListItemID, object fyne.CanvasObject) {
+					content := object.(*fyne.Container)
+					content.RemoveAll()
+					content.Add(container.NewHBox(
+						widget.NewIcon(TaskStatusResource(TaskStatuses[id])),
+						widget.NewLabel(TaskStatuses[id]),
+					))
+				},
+			)
+			statusPickerList.OnSelected = func(id widget.ListItemID) {
+				pickedStatus = TaskStatuses[id]
+			}
+			statusPickerList.Select(func() widget.ListItemID {
+				for i, stat := range TaskStatuses {
+					if stat == task.Status {
+						return i
+					}
+				}
+				return 0
+			}())
+
+			statusPickerContainer := container.NewBorder(
+				nil,
+				container.NewHBox(
+					layout.NewSpacer(),
+					widget.NewButton("OK", func() {
+						statusPickerModal.Hide()
+						task.Status = pickedStatus
+						res := app.DB().Model(&task).Update("Status", task.Status)
+						if res.Error != nil {
+							panic(fmt.Sprintf("error updating task status: %v", res.Error))
+						}
+						statusIcon.SetResource(TaskStatusResource(pickedStatus))
+					}),
+				),
+				nil,
+				nil,
+				statusPickerList,
+			)
+
+			statusPickerModal = widget.NewModalPopUp(
+				statusPickerContainer,
+				app.window.Canvas(),
+			)
 
 			content.RemoveAll()
 			content.Add(container.NewBorder(
 				nil,
 				nil,
-				GetAssetImageCanvas(
-					GetConstrainedImage(
-						TaskStatusImage(task.Status),
-						50,
-					),
-				),
+				statusIcon,
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
 						if taskList != nil {

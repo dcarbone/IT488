@@ -66,3 +66,24 @@ func FormLabel(text string, opts ...func(lbl *widget.Label)) *widget.Label {
 	}
 	return lbl
 }
+
+var _ fyne.Tappable = (*TappableIcon)(nil)
+
+type TappableIcon struct {
+	*widget.Icon
+
+	act func(ev *fyne.PointEvent)
+}
+
+func NewTappableIcon(rsc fyne.Resource, act func(ev *fyne.PointEvent)) *TappableIcon {
+	ti := TappableIcon{
+		Icon: widget.NewIcon(rsc),
+		act:  act,
+	}
+	ti.ExtendBaseWidget(&ti)
+	return &ti
+}
+
+func (t *TappableIcon) Tapped(ev *fyne.PointEvent) {
+	t.act(ev)
+}

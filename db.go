@@ -139,11 +139,3 @@ func (t Task) PriorityIcon() *canvas.Image {
 		),
 	)
 }
-
-func (t Task) StatusIcon() *canvas.Image {
-	return GetAssetImageCanvas(
-		GetConstrainedImage(
-			TaskStatusImage(t.Status), 100,
-		),
-	)
-}

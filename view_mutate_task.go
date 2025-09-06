@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"image/color"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,8 +19,6 @@ import (
 
 var (
 	_ View = (*MutateTaskView)(nil)
-
-	taskSelectRe = regexp.MustCompile("\\((\\d+)\\)$")
 )
 
 type MutateTaskView struct {
@@ -74,7 +70,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 
 	listNames := make([]string, 0)
 	for _, tl := range allTaskLists {
-		listNames = append(listNames, fmt.Sprintf("%s (%d)", tl.Label, tl.ID))
+		listNames = append(listNames, tl.Label)
 	}
 
 	titleLabel := canvas.NewText("Title", color.Black)
@@ -93,15 +89,8 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 
 	tlSelectLabel := canvas.NewText("Choose Task List", color.Black)
 	tlSelect := widget.NewSelect(listNames, func(s string) {
-		var id uint
-		if v.task != nil {
-			id = uint(v.task.TaskListID)
-		} else {
-			idd, _ := strconv.ParseUint(taskSelectRe.FindStringSubmatch(s)[1], 10, 64)
-			id = uint(idd)
-		}
 		for _, tl := range allTaskLists {
-			if id == tl.ID {
+			if s == tl.Label {
 				chosenTaskList = &tl
 				break
 			}
@@ -109,7 +98,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	})
 
 	if chosenTaskList != nil {
-		tlSelect.Selected = fmt.Sprintf("%s (%d)", chosenTaskList.Label, chosenTaskList.ID)
+		tlSelect.Selected = chosenTaskList.Label
 	}
 
 	chosenStatus := TaskStatusTodo

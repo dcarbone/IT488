@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"image"
+	"image/png"
 	"io"
 	"io/fs"
 	"path"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"golang.org/x/image/draw"
 )
@@ -88,4 +91,13 @@ func GetAssetImageCanvas(src image.Image, opts ...func(mg *canvas.Image)) *canva
 		opt(img)
 	}
 	return img
+}
+
+func EncodeImageToResource(name string, img image.Image) *fyne.StaticResource {
+	buf := bytes.NewBuffer(nil)
+	err := png.Encode(buf, img)
+	if err != nil {
+		panic(fmt.Sprintf("error encoding %q image: %v", name, err))
+	}
+	return fyne.NewStaticResource(name, buf.Bytes())
 }
