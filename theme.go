@@ -87,3 +87,32 @@ func NewTappableIcon(rsc fyne.Resource, act func(ev *fyne.PointEvent)) *Tappable
 func (t *TappableIcon) Tapped(ev *fyne.PointEvent) {
 	t.act(ev)
 }
+
+type CyclingTappableIcon struct {
+	*widget.Button
+
+	idx     int
+	choices []fyne.Resource
+	act     func(idx int)
+}
+
+func NewCyclingTappableIcon(first int, choices []fyne.Resource, act func(idx int)) *CyclingTappableIcon {
+	i := &CyclingTappableIcon{
+		idx:     first,
+		choices: choices,
+		act:     act,
+	}
+	i.Button = widget.NewButtonWithIcon("", choices[first], i.onClick)
+	i.ExtendBaseWidget(i)
+	i.Importance = widget.LowImportance
+	return i
+}
+
+func (i *CyclingTappableIcon) onClick() {
+	i.idx++
+	if i.idx == len(i.choices) {
+		i.idx = 0
+	}
+	i.Button.SetIcon(i.choices[i.idx])
+	i.act(i.idx)
+}

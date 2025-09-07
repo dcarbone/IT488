@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"slices"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -23,74 +24,55 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 			return container.NewStack(widget.NewLabel("Loading..."))
 		},
 		func(id widget.ListItemID, object fyne.CanvasObject) {
-			var statusPickerModal *widget.PopUp
-
 			task := tasks[id]
 
 			content := object.(*fyne.Container)
 
-			statusIcon := NewTappableIcon(TaskStatusResource(task.Status), func(ev *fyne.PointEvent) {
-				statusPickerModal.Show()
-			})
-
-			var pickedStatus string
-			statusPickerList := widget.NewList(
-				func() int {
-					return len(TaskStatuses)
-				},
-				func() fyne.CanvasObject {
-					return container.NewStack(widget.NewLabel("Loading..."))
-				},
-				func(id widget.ListItemID, object fyne.CanvasObject) {
-					content := object.(*fyne.Container)
-					content.RemoveAll()
-					content.Add(container.NewHBox(
-						widget.NewIcon(TaskStatusResource(TaskStatuses[id])),
-						widget.NewLabel(TaskStatuses[id]),
-					))
-				},
-			)
-			statusPickerList.OnSelected = func(id widget.ListItemID) {
-				pickedStatus = TaskStatuses[id]
-			}
-			statusPickerList.Select(func() widget.ListItemID {
-				for i, stat := range TaskStatuses {
-					if stat == task.Status {
-						return i
+			var statusButton *widget.Button
+			statusIdx := slices.Index(TaskStatuses, task.Status)
+			statusButton = widget.NewButtonWithIcon(
+				"",
+				TaskStatusResource(task.Status),
+				func() {
+					statusIdx++
+					if statusIdx == len(TaskStatuses) {
+						statusIdx = 0
 					}
-				}
-				return 0
-			}())
-
-			statusPickerContainer := container.NewBorder(
-				nil,
-				container.NewHBox(
-					layout.NewSpacer(),
-					widget.NewButton("OK", func() {
-						statusPickerModal.Hide()
-						task.Status = pickedStatus
-						res := app.DB().Model(&task).Update("Status", task.Status)
-						if res.Error != nil {
-							panic(fmt.Sprintf("error updating task status: %v", res.Error))
-						}
-						statusIcon.SetResource(TaskStatusResource(pickedStatus))
-					}),
-				),
-				nil,
-				nil,
-				statusPickerList,
+					task.Status = TaskStatuses[statusIdx]
+					res := app.DB().Model(&task).Update("Status", task.Status)
+					if res.Error != nil {
+						panic(fmt.Sprintf("error updating task status: %v", res.Error))
+					}
+					statusButton.SetIcon(TaskStatusResource(TaskStatuses[statusIdx]))
+				},
 			)
+			statusButton.Importance = widget.LowImportance
 
-			statusPickerModal = widget.NewModalPopUp(
-				statusPickerContainer,
-				app.window.Canvas(),
+			var priorityButton *widget.Button
+			priorityIdx := slices.Index(TaskPriorities, strings.ToTitle(TaskPriorityName(task.UserPriority)))
+			priorityButton = widget.NewButtonWithIcon(
+				"",
+				TaskPriorityResource(TaskPriorityName(task.UserPriority)),
+				func() {
+					priorityIdx++
+					if priorityIdx == len(TaskPriorities) {
+						priorityIdx = 0
+					}
+					task.UserPriority = TaskPriorityNumber(TaskPriorities[priorityIdx])
+					res := app.DB().Model(&task).Update("UserPriority", task.UserPriority)
+					if res.Error != nil {
+						panic(fmt.Sprintf("error updating task user priority: %v", res.Error))
+					}
+					priorityButton.SetIcon(TaskPriorityResource(TaskPriorities[priorityIdx]))
+				},
 			)
+			priorityButton.Importance = widget.LowImportance
 
 			content.RemoveAll()
 			content.Add(container.NewBorder(
 				nil,
 				nil,
-				statusIcon,
+				container.NewHBox(statusButton, priorityButton),
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
 						if taskList != nil {
@@ -107,10 +89,7 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 						onDelete()
 					}),
 				),
-				container.NewHBox(
-					task.PriorityIcon(),
-					widget.NewLabel(task.Label),
-				),
+				widget.NewLabel(task.Label),
 			))
 		},
 	)

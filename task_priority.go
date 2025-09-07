@@ -3,6 +3,8 @@ package main
 import (
 	"image"
 	"strings"
+
+	"fyne.io/fyne/v2"
 )
 
 const (
@@ -19,6 +21,23 @@ var (
 		strings.ToTitle(TaskPriorityHigh),
 		strings.ToTitle(TaskPriorityHighest),
 	}
+
+	TaskPriorityIconResourceLowest = EncodeImageToResource(
+		"task_priority_lowest",
+		GetConstrainedImage(TaskPriorityImage(TaskPriorityLowest), 50),
+	)
+	TaskPriorityIconResourceLow = EncodeImageToResource(
+		"task_priority_low",
+		GetConstrainedImage(TaskPriorityImage(TaskPriorityLow), 50),
+	)
+	TaskPriorityIconResourceHigh = EncodeImageToResource(
+		"task_priority_high",
+		GetConstrainedImage(TaskPriorityImage(TaskPriorityHigh), 50),
+	)
+	TaskPriorityIconResourceHighest = EncodeImageToResource(
+		"task_priority_highest",
+		GetConstrainedImage(TaskPriorityImage(TaskPriorityHighest), 50),
+	)
 )
 
 func TaskPriorityNumber(priority string) uint {
@@ -60,5 +79,19 @@ func TaskPriorityImage(priority string) image.Image {
 
 	default:
 		return AssetImagePriorityHigh
+	}
+}
+
+func TaskPriorityResource(priority string) *fyne.StaticResource {
+	switch strings.ToLower(priority) {
+	case TaskPriorityLowest:
+		return TaskPriorityIconResourceLowest
+	case TaskPriorityLow:
+		return TaskPriorityIconResourceLow
+	case TaskPriorityHighest:
+		return TaskPriorityIconResourceHighest
+
+	default:
+		return TaskPriorityIconResourceHigh
 	}
 }
