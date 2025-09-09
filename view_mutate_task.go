@@ -110,14 +110,14 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 
 	var priorityContainer *fyne.Container
 	chosenPriority := TaskPriorityHigh
+	if v.task != nil {
+		chosenPriority = TaskPriorityName(v.task.UserPriority)
+	}
 	chosenPriorityImageContainer := container.NewStack(
 		GetAssetImageCanvas(
 			GetConstrainedImage(TaskPriorityImage(chosenPriority), 50),
 		),
 	)
-	if v.task != nil {
-		chosenPriority = TaskPriorityName(v.task.UserPriority)
-	}
 	prioritySelectLabel := widget.NewLabel("Priority")
 	prioritySelect := widget.NewSelect(TaskPriorities, func(s string) {
 		chosenPriority = strings.ToLower(s)
