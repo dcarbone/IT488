@@ -103,10 +103,10 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		chosenStatus = v.task.Status
 	}
 	statusSelectLabel := widget.NewLabel("Status")
-	statusSelect := widget.NewSelect(TaskStatuses, func(s string) {
-		chosenStatus = strings.ToLower(s)
+	statusSelect := widget.NewSelect(TaskStatusTitles, func(s string) {
+		chosenStatus = TaskStatusNumber(s)
 	})
-	statusSelect.Selected = strings.ToTitle(chosenStatus)
+	statusSelect.Selected = TaskStatusTitle(chosenStatus)
 
 	var priorityContainer *fyne.Container
 	chosenPriority := TaskPriorityHigh
@@ -240,7 +240,6 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 				res = v.app.DB().Create(&task)
 			}
 			if res.Error != nil {
-				log.Error("Error saving task", "err", res.Error)
 				panic(fmt.Sprintf("Error saving task: %v", res.Error))
 			}
 

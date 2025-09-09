@@ -116,7 +116,7 @@ type Task struct {
 	gorm.Model
 	Label       string `gorm:"not null"`
 	Description string
-	Status      string
+	Status      uint `gorm:"default:0;not null"`
 
 	// Priority is actually used as a priority _within tasks_, not user-defined priority.
 	// Its a poorly named column.

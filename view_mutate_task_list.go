@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"gorm.io/gorm"
@@ -53,13 +54,6 @@ func (v *MutateTaskListView) Background() {
 func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 	content := container.NewVBox()
 
-	hdr := canvas.NewText("Create New List", color.Black)
-	hdr.Alignment = fyne.TextAlignCenter
-	hdr.TextStyle = fyne.TextStyle{Bold: true}
-	hdr.TextSize = 32
-
-	content.Add(hdr)
-
 	if err != nil {
 		content.Add(canvas.NewText("Error:", ColorRed))
 		content.Add(canvas.NewText(err.Error(), ColorRed))
@@ -67,14 +61,15 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 
 	content.Add(canvas.NewText("Name:", color.Black))
 
-	nameInput := widget.NewEntry()
-	nameInput.OnChanged = func(s string) {
+	labelInput := widget.NewEntry()
+	labelInput.PlaceHolder = "Enter task list name."
+	labelInput.OnChanged = func(s string) {
 		if len(s) > 50 {
-			nameInput.SetText(s[:50])
+			labelInput.SetText(s[:50])
 		}
 	}
 
-	content.Add(nameInput)
+	content.Add(labelInput)
 
 	content.Add(canvas.NewText("Description:", color.Black))
 
@@ -88,45 +83,43 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 
 	content.Add(descInput)
 
-	createBtn := widget.NewButtonWithIcon(
-		"Save",
-		theme.DocumentSaveIcon(),
-		func() {
-			v.mu.Lock()
-			if v.state != ViewStateForeground {
-				v.mu.Unlock()
-				return
-			}
-			tl, err := v.createList(nameInput.Text, descInput.Text)
-			if err != nil {
-				v.render(err)
-				v.mu.Unlock()
-				return
-			}
+	return container.NewBorder(
+		nil,
+		container.NewHBox(
+			layout.NewSpacer(),
+			widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
+				v.app.RenderPreviousView()
+			}),
+			widget.NewButtonWithIcon(
+				"Save",
+				theme.DocumentSaveIcon(),
+				func() {
+					var res *gorm.DB
+					if v.taskList != nil {
+						v.taskList.Label = labelInput.Text
+						v.taskList.Description = descInput.Text
+						res = v.app.DB().Updates(v.taskList)
+					} else {
+						v.taskList = &TaskList{
+							Label:       labelInput.Text,
+							Date:        time.Now(),
+							Description: descInput.Text,
+						}
+						res = v.app.DB().Create(v.taskList)
+					}
+					if res.Error != nil {
+						v.render(err)
+						return
+					}
 
-			v.mu.Unlock()
-			v.app.RenderListOfTasksView(tl.Label, v.taskList, func(db *gorm.DB) *gorm.DB {
-				return db.Where("task_list_id = ?", tl.ID)
-			})
-		},
+					v.app.RenderListOfTasksView(v.taskList.Label, v.taskList, func(db *gorm.DB) *gorm.DB {
+						return db.Where("task_list_id = ?", v.taskList.ID)
+					})
+				},
+			),
+		),
+		nil,
+		nil,
+		content,
 	)
-
-	content.Add(createBtn)
-
-	return content
-}
-
-func (v *MutateTaskListView) createList(name, description string) (TaskList, error) {
-	tl := TaskList{
-		Label:       name,
-		Date:        time.Now(),
-		Description: description,
-	}
-	res := v.app.DB().Create(&tl)
-	if res.Error != nil {
-		log.Error("Error creating list", "err", res.Error)
-	} else {
-		log.Info("New task list created", "id", tl.ID, "name", tl.Label)
-	}
-	return tl, res.Error
 }

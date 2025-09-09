@@ -8,16 +8,20 @@ import (
 )
 
 const (
-	TaskStatusTodo = "todo"
-	TaskStatusDone = "done"
-	TaskStatusSkip = "skip"
+	TaskStatusTodo uint = 0
+	TaskStatusDone uint = 10
+	TaskStatusSkip uint = 20
+
+	TaskStatusTitleTodo = "Todo"
+	TaskStatusTitleDone = "Done"
+	TaskStatusTitleSkip = "Skip"
 )
 
 var (
-	TaskStatuses = []string{
-		strings.ToTitle(TaskStatusTodo),
-		strings.ToTitle(TaskStatusDone),
-		strings.ToTitle(TaskStatusSkip),
+	TaskStatusTitles = []string{
+		TaskStatusTitleTodo,
+		TaskStatusTitleDone,
+		TaskStatusTitleSkip,
 	}
 
 	TaskStatusIconResourceTodo = EncodeImageToResource(
@@ -34,8 +38,32 @@ var (
 	)
 )
 
-func TaskStatusImage(status string) image.Image {
+func TaskStatusNumber(status string) uint {
 	switch strings.ToLower(status) {
+	case strings.ToLower(TaskStatusTitleSkip):
+		return TaskStatusSkip
+	case strings.ToLower(TaskStatusTitleDone):
+		return TaskStatusDone
+
+	default:
+		return TaskStatusTodo
+	}
+}
+
+func TaskStatusTitle(status uint) string {
+	switch status {
+	case TaskStatusSkip:
+		return TaskStatusTitleSkip
+	case TaskStatusDone:
+		return TaskStatusTitleDone
+
+	default:
+		return TaskStatusTitleTodo
+	}
+}
+
+func TaskStatusImage(status uint) image.Image {
+	switch status {
 	case TaskStatusDone:
 		return AssetImageStatusDone
 	case TaskStatusSkip:
@@ -46,8 +74,8 @@ func TaskStatusImage(status string) image.Image {
 	}
 }
 
-func TaskStatusResource(status string) *fyne.StaticResource {
-	switch strings.ToLower(status) {
+func TaskStatusResource(status uint) *fyne.StaticResource {
+	switch status {
 	case TaskStatusDone:
 		return TaskStatusIconResourceDone
 	case TaskStatusSkip:

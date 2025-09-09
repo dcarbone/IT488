@@ -24,26 +24,26 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 			return container.NewStack(widget.NewLabel("Loading..."))
 		},
 		func(id widget.ListItemID, object fyne.CanvasObject) {
-			task := tasks[id]
+			task := &tasks[id]
 
 			content := object.(*fyne.Container)
 
 			var statusButton *widget.Button
-			statusIdx := slices.Index(TaskStatuses, task.Status)
+			statusIdx := slices.Index(TaskStatusTitles, TaskStatusTitle(task.Status))
 			statusButton = widget.NewButtonWithIcon(
 				"",
 				TaskStatusResource(task.Status),
 				func() {
 					statusIdx++
-					if statusIdx == len(TaskStatuses) {
+					if statusIdx == len(TaskStatusTitles) {
 						statusIdx = 0
 					}
-					task.Status = TaskStatuses[statusIdx]
+					task.Status = TaskStatusNumber(TaskStatusTitles[statusIdx])
 					res := app.DB().Model(&task).Update("Status", task.Status)
 					if res.Error != nil {
 						panic(fmt.Sprintf("error updating task status: %v", res.Error))
 					}
-					statusButton.SetIcon(TaskStatusResource(TaskStatuses[statusIdx]))
+					statusButton.SetIcon(TaskStatusResource(task.Status))
 				},
 			)
 			statusButton.Importance = widget.LowImportance
@@ -76,13 +76,13 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 				container.NewHBox(
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
 						if taskList != nil {
-							app.RenderMutateTaskView(&task, taskList)
+							app.RenderMutateTaskView(task, taskList)
 						} else {
-							app.RenderMutateTaskView(&task, task.TaskList)
+							app.RenderMutateTaskView(task, task.TaskList)
 						}
 					}),
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-						res := app.DB().Delete(&task)
+						res := app.DB().Delete(task)
 						if res.Error != nil {
 							panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, res.Error))
 						}
