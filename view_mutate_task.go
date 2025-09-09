@@ -62,7 +62,6 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 
 	allTaskLists, err := FindModel[TaskList](ctx, v.app.DB())
 	if err != nil {
-		log.Error("Error fetching task lists", "err", err)
 		panic(fmt.Sprintf("Error fetching task lists: %v", err))
 	}
 
