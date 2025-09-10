@@ -5,6 +5,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
 )
 
 var _ View = (*NavigationView)(nil)
@@ -53,6 +54,18 @@ func (v *NavigationView) Foreground() fyne.CanvasObject {
 				}),
 				widget.NewButton("All Tasks", func() {
 					v.app.RenderListOfTasksView("All Tasks", nil)
+				}),
+				widget.NewButton("Todo Tasks", func() {
+					v.app.RenderListOfTasksView("Todo Tasks", nil, func(db *gorm.DB) *gorm.DB {
+						return WithSort("due_date asc")(WithSort("id asc")(WithPreload("TaskList")(db))).
+							Where("Status = ?", TaskStatusTodo)
+					})
+				}),
+				widget.NewButton("Done Tasks", func() {
+					v.app.RenderListOfTasksView("Done Tasks", nil, func(db *gorm.DB) *gorm.DB {
+						return WithSort("due_date asc")(WithSort("id asc")(WithPreload("TaskList")(db))).
+							Where("Status = ?", TaskStatusDone)
+					})
 				}),
 			),
 		),
