@@ -9,7 +9,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/sdassow/fyne-datepicker v0.0.0-20250403132905-bf906d02ba0c
 	golang.org/x/image v0.31.0
-	gorm.io/gorm v1.30.5
+	gorm.io/gorm v1.31.0
 )
 
 require (
