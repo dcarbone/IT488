@@ -83,41 +83,52 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 
 	content.Add(descInput)
 
+	ftr := container.NewHBox(layout.NewSpacer())
+
+	if v.taskList != nil {
+		ftr.Add(widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() {
+			res := v.app.DB().Delete(v.taskList)
+			if res.Error != nil {
+				panic(fmt.Sprintf("Error deleting task list %d: %v", v.taskList.ID, err))
+			}
+			v.app.RenderTaskListsView()
+		}))
+	}
+
+	ftr.Add(widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
+		v.app.RenderPreviousView()
+	}))
+	ftr.Add(widget.NewButtonWithIcon(
+		"Save",
+		theme.DocumentSaveIcon(),
+		func() {
+			var res *gorm.DB
+			if v.taskList != nil {
+				v.taskList.Label = labelInput.Text
+				v.taskList.Description = descInput.Text
+				res = v.app.DB().Updates(v.taskList)
+			} else {
+				v.taskList = &TaskList{
+					Label:       labelInput.Text,
+					Date:        time.Now(),
+					Description: descInput.Text,
+				}
+				res = v.app.DB().Create(v.taskList)
+			}
+			if res.Error != nil {
+				v.render(err)
+				return
+			}
+
+			v.app.RenderListOfTasksView(v.taskList.Label, v.taskList, func(db *gorm.DB) *gorm.DB {
+				return db.Where("task_list_id = ?", v.taskList.ID)
+			})
+		},
+	))
+
 	return container.NewBorder(
 		nil,
-		container.NewHBox(
-			layout.NewSpacer(),
-			widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
-				v.app.RenderPreviousView()
-			}),
-			widget.NewButtonWithIcon(
-				"Save",
-				theme.DocumentSaveIcon(),
-				func() {
-					var res *gorm.DB
-					if v.taskList != nil {
-						v.taskList.Label = labelInput.Text
-						v.taskList.Description = descInput.Text
-						res = v.app.DB().Updates(v.taskList)
-					} else {
-						v.taskList = &TaskList{
-							Label:       labelInput.Text,
-							Date:        time.Now(),
-							Description: descInput.Text,
-						}
-						res = v.app.DB().Create(v.taskList)
-					}
-					if res.Error != nil {
-						v.render(err)
-						return
-					}
-
-					v.app.RenderListOfTasksView(v.taskList.Label, v.taskList, func(db *gorm.DB) *gorm.DB {
-						return db.Where("task_list_id = ?", v.taskList.ID)
-					})
-				},
-			),
-		),
+		ftr,
 		nil,
 		nil,
 		content,

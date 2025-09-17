@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -76,17 +77,10 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 				container.NewHBox(
 					widget.NewButtonWithIcon("", IconEdit, func() {
 						if taskList != nil {
-							app.RenderMutateTaskView(task, taskList)
+							app.RenderMutateTaskView(task, taskList, onDelete)
 						} else {
-							app.RenderMutateTaskView(task, task.TaskList)
+							app.RenderMutateTaskView(task, task.TaskList, onDelete)
 						}
-					}),
-					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-						res := app.DB().Delete(task)
-						if res.Error != nil {
-							panic(fmt.Sprintf("Error deleting task %d: %v", task.ID, res.Error))
-						}
-						onDelete()
 					}),
 				),
 				widget.NewLabel(task.Label),
@@ -142,14 +136,18 @@ func (v *ListOfTasksView) Foreground() fyne.CanvasObject {
 		panic(fmt.Sprintf("Error counting tasks: %v", err))
 	}
 
-	ftr := container.NewBorder(
-		nil,
-		nil,
+	ftr := container.NewHBox(
 		canvas.NewText(fmt.Sprintf("Total tasks: %d", taskCount), color.Black),
-		widget.NewButtonWithIcon("New task", theme.Icon(theme.IconNameContentAdd), func() {
-			v.app.RenderMutateTaskView(nil, v.taskList)
-		}),
+		layout.NewSpacer(),
 	)
+	if v.taskList != nil {
+		ftr.Add(widget.NewButtonWithIcon("Edit", IconEdit, func() {
+			v.app.RenderMutateTaskListView(v.taskList)
+		}))
+	}
+	ftr.Add(widget.NewButtonWithIcon("New task", theme.ContentAddIcon(), func() {
+		v.app.RenderMutateTaskView(nil, v.taskList, func() { v.app.RenderListOfTasksView(v.Name(), v.taskList, v.opts...) })
+	}))
 
 	tasks, err := FindModel[Task](ctx, v.app.DB(), v.opts...)
 	if err != nil {

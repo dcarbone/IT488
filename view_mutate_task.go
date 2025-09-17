@@ -25,13 +25,15 @@ type MutateTaskView struct {
 	*baseView
 	task     *Task
 	taskList *TaskList
+	onDelete func()
 }
 
-func NewMutateTaskView(app *TaskApp, task *Task, taskList *TaskList) *MutateTaskView {
+func NewMutateTaskView(app *TaskApp, task *Task, taskList *TaskList, onDelete func()) *MutateTaskView {
 	v := MutateTaskView{
 		baseView: newBaseView("Mutate Task Modal", app),
 		task:     task,
 		taskList: taskList,
+		onDelete: onDelete,
 	}
 	return &v
 }
@@ -148,7 +150,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		chosenDueDate = t
 		dueDateDisplay.SetText(FormatDateTime(chosenDueDate))
 	})
-	dtpSaveBtn := widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
+	dtpSaveBtn := widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(), func() {
 		dtp.OnActioned(true)
 		datePickerModal.Hide()
 	})
@@ -157,7 +159,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			nil,
 			nil,
 			nil,
-			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), func() {
+			widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
 				datePickerModal.Hide()
 			}),
 		),
@@ -176,7 +178,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		v.app.window.Canvas(),
 	)
 
-	dtpButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCalendar), datePickerModal.Show)
+	dtpButton := widget.NewButtonWithIcon("", theme.CalendarIcon(), datePickerModal.Show)
 	dueDateContainer := container.NewBorder(nil, nil, dueDateDisplay, dtpButton)
 
 	descLabel := FormLabel("Description:")
@@ -214,38 +216,47 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		),
 	)
 
-	ftr := container.NewHBox(
-		layout.NewSpacer(),
-		widget.NewButtonWithIcon("Cancel", theme.Icon(theme.IconNameCancel), v.app.RenderPreviousView),
-		widget.NewButtonWithIcon("Save", theme.Icon(theme.IconNameDocumentSave), func() {
-			var res *gorm.DB
-			if v.task != nil {
-				v.task.Label = titleInput.Text
-				v.task.Description = descInput.Text
-				v.task.Status = chosenStatus
-				v.task.UserPriority = TaskPriorityNumber(chosenPriority)
-				v.task.TaskList = chosenTaskList
-				v.task.DueDate = chosenDueDate
-				res = v.app.DB().Updates(v.task)
-			} else {
-				task := Task{
-					Label:        titleInput.Text,
-					Description:  descInput.Text,
-					Status:       chosenStatus,
-					UserPriority: TaskPriorityNumber(chosenPriority),
-					TaskList:     chosenTaskList,
-					DueDate:      chosenDueDate,
-					Priority:     GetNextTaskOrderNum(),
-				}
-				res = v.app.DB().Create(&task)
-			}
-			if res.Error != nil {
-				panic(fmt.Sprintf("Error saving task: %v", res.Error))
-			}
+	ftr := container.NewHBox(layout.NewSpacer())
 
-			v.app.RenderPreviousView()
-		}),
-	)
+	if v.task != nil {
+		ftr.Add(widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() {
+			res := v.app.DB().Delete(v.task)
+			if res.Error != nil {
+				panic(fmt.Sprintf("Error deleting task %d: %v", v.task.ID, res.Error))
+			}
+			v.onDelete()
+		}))
+	}
+
+	ftr.Add(widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), v.app.RenderPreviousView))
+	ftr.Add(widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(), func() {
+		var res *gorm.DB
+		if v.task != nil {
+			v.task.Label = titleInput.Text
+			v.task.Description = descInput.Text
+			v.task.Status = chosenStatus
+			v.task.UserPriority = TaskPriorityNumber(chosenPriority)
+			v.task.TaskList = chosenTaskList
+			v.task.DueDate = chosenDueDate
+			res = v.app.DB().Updates(v.task)
+		} else {
+			task := Task{
+				Label:        titleInput.Text,
+				Description:  descInput.Text,
+				Status:       chosenStatus,
+				UserPriority: TaskPriorityNumber(chosenPriority),
+				TaskList:     chosenTaskList,
+				DueDate:      chosenDueDate,
+				Priority:     GetNextTaskOrderNum(),
+			}
+			res = v.app.DB().Create(&task)
+		}
+		if res.Error != nil {
+			panic(fmt.Sprintf("Error saving task: %v", res.Error))
+		}
+
+		v.app.RenderPreviousView()
+	}))
 
 	content = container.NewBorder(
 		nil,

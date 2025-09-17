@@ -37,7 +37,7 @@ func (v *NavigationView) Foreground() fyne.CanvasObject {
 			nil,
 			nil,
 			nil,
-			widget.NewButtonWithIcon("", theme.Icon(theme.IconNameCancel), func() {
+			widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
 				v.app.RenderPreviousView()
 			}),
 		),
@@ -50,7 +50,7 @@ func (v *NavigationView) Foreground() fyne.CanvasObject {
 				widget.NewSeparator(),
 				widget.NewSeparator(),
 
-				widget.NewButtonWithIcon("Home", theme.Icon(theme.IconNameHome), func() {
+				widget.NewButtonWithIcon("Home", theme.HomeIcon(), func() {
 					v.app.RenderHomeView()
 				}),
 

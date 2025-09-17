@@ -52,7 +52,7 @@ func newTaskApp(fyneApp fyne.App, window fyne.Window, db *gorm.DB) *TaskApp {
 
 	fyneApp.Settings().SetTheme(NewTheme())
 
-	ta.showNavBtn = widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
+	ta.showNavBtn = widget.NewButtonWithIcon("", theme.ListIcon(), func() {
 		ta.RenderNavigation()
 	})
 	ta.viewTitle = HeaderCanvas("")
@@ -130,10 +130,10 @@ func (ta *TaskApp) RenderListOfTasksView(title string, taskList *TaskList, opts 
 	ta.renderView(NewListOfTasksView(ta, title, taskList, opts...))
 }
 
-func (ta *TaskApp) RenderMutateTaskView(task *Task, taskList *TaskList) {
+func (ta *TaskApp) RenderMutateTaskView(task *Task, taskList *TaskList, onDelete func()) {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
-	ta.renderView(NewMutateTaskView(ta, task, taskList))
+	ta.renderView(NewMutateTaskView(ta, task, taskList, onDelete))
 }
 
 func (ta *TaskApp) Container() *fyne.Container {

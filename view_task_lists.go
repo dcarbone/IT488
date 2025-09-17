@@ -73,20 +73,13 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 				nil,
 				nil,
 				container.NewHBox(
-					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameList), func() {
+					widget.NewButtonWithIcon("", theme.ListIcon(), func() {
 						v.app.RenderListOfTasksView(taskList.Label, &taskList, func(db *gorm.DB) *gorm.DB {
 							return db.Where("task_list_id = ?", taskList.ID)
 						})
 					}),
 					widget.NewButtonWithIcon("", IconEdit, func() {
 						v.app.RenderMutateTaskListView(&taskList)
-					}),
-					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
-						res := v.app.DB().Delete(&taskList)
-						if res.Error != nil {
-							panic(fmt.Sprintf("Error deleting task list %d: %v", taskList.ID, err))
-						}
-						v.app.RenderTaskListsView()
 					}),
 				),
 				widget.NewLabel(taskList.Label),
@@ -98,7 +91,7 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 		nil,
 		nil,
 		canvas.NewText(fmt.Sprintf("Total lists: %d", listCount), color.Black),
-		widget.NewButtonWithIcon("New list", theme.Icon(theme.IconNameContentAdd), func() {
+		widget.NewButtonWithIcon("New list", theme.ContentAddIcon(), func() {
 			v.app.RenderMutateTaskListView(nil)
 		}),
 	)
