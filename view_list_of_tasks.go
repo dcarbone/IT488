@@ -74,7 +74,7 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 				nil,
 				container.NewHBox(statusButton, priorityButton),
 				container.NewHBox(
-					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
+					widget.NewButtonWithIcon("", IconEdit, func() {
 						if taskList != nil {
 							app.RenderMutateTaskView(task, taskList)
 						} else {

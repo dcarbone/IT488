@@ -18,6 +18,8 @@ var (
 	ColorPink       = color.RGBA{R: 227, G: 204, B: 252} // E3CCFC
 	ColorYellow     = color.RGBA{R: 221, G: 253, B: 204} // DDFDCC
 	ColorGreen      = color.RGBA{R: 2, G: 116, B: 102}   // 027466
+
+	IconEdit = EncodeImageToResource("edit", AssetImageEditIcon)
 )
 
 var _ fyne.Theme = (*TodoTodayTheme)(nil)

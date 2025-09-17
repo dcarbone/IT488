@@ -32,6 +32,8 @@ var (
 	AssetImageStatusTodo = MustGetAssetImage("status_todo.png")
 	AssetImageStatusDone = MustGetAssetImage("status_done.png")
 	AssetImageStatusSkip = MustGetAssetImage("status_skip.png")
+
+	AssetImageEditIcon = MustGetAssetImage("edit_icon.png")
 )
 
 func GetAssetFile(name string) (fs.File, error) {

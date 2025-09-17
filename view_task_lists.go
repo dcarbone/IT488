@@ -78,7 +78,7 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 							return db.Where("task_list_id = ?", taskList.ID)
 						})
 					}),
-					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameSettings), func() {
+					widget.NewButtonWithIcon("", IconEdit, func() {
 						v.app.RenderMutateTaskListView(&taskList)
 					}),
 					widget.NewButtonWithIcon("", theme.Icon(theme.IconNameDelete), func() {
