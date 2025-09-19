@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image/color"
+	"slices"
 	"strings"
 	"time"
 
@@ -83,19 +84,22 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	titleInput.PlaceHolder = "Task Title"
 
 	chosenTaskList := v.taskList
+	if chosenTaskList == nil {
+		chosenTaskList = GetListForTask(ctx, v.app.DB(), *v.task)
+	}
 
-	tlSelectLabel := canvas.NewText("Choose Task List", color.Black)
+	tlSelectLabel := canvas.NewText("Task List", color.Black)
 	tlSelect := widget.NewSelect(listNames, func(s string) {
-		for _, tl := range allTaskLists {
-			if s == tl.Label {
-				chosenTaskList = &tl
-				break
-			}
+		idx := slices.Index(listNames, s)
+		if idx == -1 {
+			chosenTaskList = nil
+		} else {
+			chosenTaskList = &allTaskLists[idx]
 		}
 	})
 
 	if chosenTaskList != nil {
-		tlSelect.Selected = chosenTaskList.Label
+		tlSelect.SetSelected(chosenTaskList.Label)
 	}
 
 	chosenStatus := TaskStatusTodo
@@ -106,7 +110,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	statusSelect := widget.NewSelect(TaskStatusTitles, func(s string) {
 		chosenStatus = TaskStatusNumber(s)
 	})
-	statusSelect.Selected = TaskStatusTitle(chosenStatus)
+	statusSelect.SetSelected(TaskStatusTitle(chosenStatus))
 
 	var priorityContainer *fyne.Container
 	chosenPriority := TaskPriorityHigh
@@ -128,7 +132,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			),
 		)
 	})
-	prioritySelect.Selected = strings.ToTitle(chosenPriority)
+	prioritySelect.SetSelected(strings.ToTitle(chosenPriority))
 	priorityContainer = container.NewBorder(
 		nil,
 		nil,
