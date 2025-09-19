@@ -1,20 +1,29 @@
 package main
 
 import (
+	"context"
+	"fmt"
+
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 var _ View = (*TaskView)(nil)
 
 type TaskView struct {
 	*baseView
-	task Task
+	task     Task
+	onDelete func()
 }
 
-func NewTaskView(ta *TaskApp, task Task) *TaskView {
+func NewTaskView(ta *TaskApp, task Task, onDelete func()) *TaskView {
 	v := TaskView{
 		baseView: newBaseView("Task View", ta),
 		task:     task,
+		onDelete: onDelete,
 	}
 	return &v
 }
@@ -29,8 +38,62 @@ func (v *TaskView) Foreground() fyne.CanvasObject {
 	if !v.foreground() {
 		return nil
 	}
-	// todo: finish me!
-	return nil
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-v.deactivated
+		cancel()
+	}()
+
+	statusButton := newTaskStatusSwitcherButton(v.app.DB(), &v.task)
+	priorityButton := newTaskPrioritySwitcherButton(v.app.DB(), &v.task)
+
+	hdr := container.NewHBox(
+		layout.NewSpacer(),
+		priorityButton,
+		statusButton,
+	)
+
+	body := container.NewVBox(
+		container.NewHBox(widget.NewLabel("List:"), layout.NewSpacer(), widget.NewLabel(func() string {
+			taskList := GetListForTask(ctx, v.app.DB(), v.task)
+			if taskList == nil {
+				return "None"
+			}
+			return taskList.Label
+		}())),
+		container.NewHBox(widget.NewLabel("Due Date:"), layout.NewSpacer(), widget.NewLabel(FormatDateTime(v.task.DueDate))),
+		widget.NewSeparator(),
+		widget.NewSeparator(),
+		widget.NewSeparator(),
+		container.NewHScroll(
+			widget.NewRichTextFromMarkdown(v.task.Description),
+		),
+	)
+
+	ftr := container.NewHBox(
+		layout.NewSpacer(),
+		widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() {
+			res := v.app.DB().Delete(v.task)
+			if res.Error != nil {
+				panic(fmt.Sprintf("Error deleting task %d: %v", v.task.ID, res.Error))
+			}
+			v.onDelete()
+		}),
+		widget.NewButtonWithIcon("Edit", IconEdit, func() {
+			v.app.RenderMutateTaskView(&v.task, nil, v.onDelete)
+		}),
+	)
+
+	return container.NewBorder(
+		hdr,
+		ftr,
+		nil,
+		nil,
+		body,
+	)
 }
 
 func (v *TaskView) Background() {

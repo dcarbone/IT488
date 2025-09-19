@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"image"
+	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
 )
 
 const (
@@ -94,4 +98,28 @@ func TaskPriorityResource(priority string) *fyne.StaticResource {
 	default:
 		return TaskPriorityIconResourceHigh
 	}
+}
+
+func newTaskPrioritySwitcherButton(db *gorm.DB, task *Task) *widget.Button {
+	var priorityButton *widget.Button
+	priorityIdx := slices.Index(TaskPriorities, strings.ToTitle(TaskPriorityName(task.UserPriority)))
+	priorityButton = widget.NewButtonWithIcon(
+		"",
+		TaskPriorityResource(TaskPriorityName(task.UserPriority)),
+		func() {
+			priorityIdx++
+			if priorityIdx == len(TaskPriorities) {
+				priorityIdx = 0
+			}
+			task.UserPriority = TaskPriorityNumber(TaskPriorities[priorityIdx])
+			res := db.Model(&task).Update("UserPriority", task.UserPriority)
+			if res.Error != nil {
+				panic(fmt.Sprintf("error updating task user priority: %v", res.Error))
+			}
+			priorityButton.SetIcon(TaskPriorityResource(TaskPriorities[priorityIdx]))
+		},
+	)
+	priorityButton.Importance = widget.LowImportance
+
+	return priorityButton
 }

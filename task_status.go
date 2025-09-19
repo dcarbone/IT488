@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"image"
+	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
+	"gorm.io/gorm"
 )
 
 const (
@@ -84,4 +88,28 @@ func TaskStatusResource(status uint) *fyne.StaticResource {
 	default:
 		return TaskStatusIconResourceTodo
 	}
+}
+
+func newTaskStatusSwitcherButton(db *gorm.DB, task *Task) *widget.Button {
+	var statusButton *widget.Button
+	var statusIdx = slices.Index(TaskStatusTitles, TaskStatusTitle(task.Status))
+	statusButton = widget.NewButtonWithIcon(
+		"",
+		TaskStatusResource(task.Status),
+		func() {
+			statusIdx++
+			if statusIdx == len(TaskStatusTitles) {
+				statusIdx = 0
+			}
+			task.Status = TaskStatusNumber(TaskStatusTitles[statusIdx])
+			res := db.Model(&task).Update("Status", task.Status)
+			if res.Error != nil {
+				panic(fmt.Sprintf("error updating task status: %v", res.Error))
+			}
+			statusButton.SetIcon(TaskStatusResource(task.Status))
+		},
+	)
+	statusButton.Importance = widget.LowImportance
+
+	return statusButton
 }

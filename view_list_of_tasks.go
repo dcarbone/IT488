@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
-	"slices"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -17,7 +15,7 @@ import (
 )
 
 func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDelete func()) fyne.CanvasObject {
-	return widget.NewList(
+	list := widget.NewList(
 		func() int {
 			return len(tasks)
 		},
@@ -29,51 +27,14 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 
 			content := object.(*fyne.Container)
 
-			var statusButton *widget.Button
-			statusIdx := slices.Index(TaskStatusTitles, TaskStatusTitle(task.Status))
-			statusButton = widget.NewButtonWithIcon(
-				"",
-				TaskStatusResource(task.Status),
-				func() {
-					statusIdx++
-					if statusIdx == len(TaskStatusTitles) {
-						statusIdx = 0
-					}
-					task.Status = TaskStatusNumber(TaskStatusTitles[statusIdx])
-					res := app.DB().Model(&task).Update("Status", task.Status)
-					if res.Error != nil {
-						panic(fmt.Sprintf("error updating task status: %v", res.Error))
-					}
-					statusButton.SetIcon(TaskStatusResource(task.Status))
-				},
-			)
-			statusButton.Importance = widget.LowImportance
-
-			var priorityButton *widget.Button
-			priorityIdx := slices.Index(TaskPriorities, strings.ToTitle(TaskPriorityName(task.UserPriority)))
-			priorityButton = widget.NewButtonWithIcon(
-				"",
-				TaskPriorityResource(TaskPriorityName(task.UserPriority)),
-				func() {
-					priorityIdx++
-					if priorityIdx == len(TaskPriorities) {
-						priorityIdx = 0
-					}
-					task.UserPriority = TaskPriorityNumber(TaskPriorities[priorityIdx])
-					res := app.DB().Model(&task).Update("UserPriority", task.UserPriority)
-					if res.Error != nil {
-						panic(fmt.Sprintf("error updating task user priority: %v", res.Error))
-					}
-					priorityButton.SetIcon(TaskPriorityResource(TaskPriorities[priorityIdx]))
-				},
-			)
-			priorityButton.Importance = widget.LowImportance
-
 			content.RemoveAll()
 			content.Add(container.NewBorder(
 				nil,
 				nil,
-				container.NewHBox(statusButton, priorityButton),
+				container.NewHBox(
+					newTaskStatusSwitcherButton(app.DB(), task),
+					newTaskPrioritySwitcherButton(app.DB(), task),
+				),
 				container.NewHBox(
 					widget.NewButtonWithIcon("", IconEdit, func() {
 						if taskList != nil {
@@ -87,6 +48,12 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 			))
 		},
 	)
+
+	list.OnSelected = func(id widget.ListItemID) {
+		app.RenderTaskView(tasks[id], onDelete)
+	}
+
+	return list
 }
 
 var _ View = (*ListOfTasksView)(nil)
@@ -103,7 +70,7 @@ func NewListOfTasksView(app *TaskApp, title string, taskList *TaskList, opts ...
 		baseView: newBaseView("Task List View", app),
 		title:    title,
 		taskList: taskList,
-		opts:     append(opts, WithPreload("TaskList")),
+		opts:     opts,
 	}
 	return &v
 }
@@ -146,7 +113,9 @@ func (v *ListOfTasksView) Foreground() fyne.CanvasObject {
 		}))
 	}
 	ftr.Add(widget.NewButtonWithIcon("New task", theme.ContentAddIcon(), func() {
-		v.app.RenderMutateTaskView(nil, v.taskList, func() { v.app.RenderListOfTasksView(v.Name(), v.taskList, v.opts...) })
+		v.app.RenderMutateTaskView(nil, v.taskList, func() {
+			v.app.RenderListOfTasksView(v.Name(), v.taskList, v.opts...)
+		})
 	}))
 
 	tasks, err := FindModel[Task](ctx, v.app.DB(), v.opts...)
@@ -166,7 +135,7 @@ func (v *ListOfTasksView) Foreground() fyne.CanvasObject {
 			v.app,
 			v.taskList,
 			tasks,
-			func() { v.app.RenderListOfTasksView(v.Name(), v.taskList, v.opts...) },
+			func() { v.app.RenderListOfTasksView(v.Name(), v.taskList, append(v.opts, WithPreload("TaskList"))...) },
 		),
 	)
 }

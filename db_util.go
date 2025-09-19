@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -94,4 +95,20 @@ func todaysTasksModelQueryOpt() ModelQueryOpt {
 		return WithSort("due_date asc")(WithSort("id asc")(WithPreload("TaskList")(db))).
 			Where("date(`tasks`.`due_date`, 'localtime') = date('now', 'localtime')")
 	}
+}
+
+func GetListForTask(ctx context.Context, db *gorm.DB, task Task) *TaskList {
+	if task.TaskList != nil {
+		return task.TaskList
+	}
+	if task.TaskListID.Valid {
+		taskList, err := FindOneModel[TaskList](ctx, db, func(db *gorm.DB) *gorm.DB {
+			return db.Where("ID = ?", task.TaskListID.V)
+		})
+		if err != nil {
+			panic(fmt.Sprintf("error loading task list with ID %d: %v", task.TaskListID.V, err))
+		}
+		return taskList
+	}
+	return nil
 }

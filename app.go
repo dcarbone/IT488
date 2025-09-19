@@ -89,6 +89,12 @@ func (ta *TaskApp) renderView(view View) {
 	ta.contentWrapper.Add(ta.activeView.Foreground())
 }
 
+func (ta *TaskApp) PreviousView() View {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	return ta.previousView
+}
+
 func (ta *TaskApp) RenderPreviousView() {
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
@@ -135,6 +141,18 @@ func (ta *TaskApp) RenderMutateTaskView(task *Task, taskList *TaskList, onDelete
 	defer ta.mu.Unlock()
 	ta.renderView(NewMutateTaskView(ta, task, taskList, onDelete))
 }
+
+func (ta *TaskApp) RenderTaskView(task Task, onDelete func()) {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	ta.renderView(NewTaskView(ta, task, onDelete))
+}
+
+//func (ta *TaskApp) RenderTaskListView(taskList TaskList, onDelete func())  {
+//	ta.mu.Lock()
+//	defer ta.mu.Unlock()
+//	ta.renderView()
+//}
 
 func (ta *TaskApp) Container() *fyne.Container {
 	ta.mu.Lock()

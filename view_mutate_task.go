@@ -52,8 +52,6 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		return nil
 	}
 
-	var content *fyne.Container
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -258,15 +256,13 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		v.app.RenderPreviousView()
 	}))
 
-	content = container.NewBorder(
+	return container.NewBorder(
 		nil,
 		ftr,
 		nil,
 		nil,
 		body,
 	)
-
-	return content
 }
 
 func (v *MutateTaskView) Background() {

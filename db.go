@@ -126,7 +126,7 @@ type Task struct {
 
 	DueDate time.Time
 
-	TaskListID int
+	TaskListID sql.Null[int]
 	TaskList   *TaskList
 }
 
