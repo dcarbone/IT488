@@ -148,11 +148,11 @@ func (ta *TaskApp) RenderTaskView(task Task, onDelete func()) {
 	ta.renderView(NewTaskView(ta, task, onDelete))
 }
 
-//func (ta *TaskApp) RenderTaskListView(taskList TaskList, onDelete func())  {
-//	ta.mu.Lock()
-//	defer ta.mu.Unlock()
-//	ta.renderView()
-//}
+func (ta *TaskApp) RenderTaskListView(taskList TaskList, onDelete func()) {
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+	ta.renderView(NewTaskListView(ta, taskList, onDelete))
+}
 
 func (ta *TaskApp) Container() *fyne.Container {
 	ta.mu.Lock()

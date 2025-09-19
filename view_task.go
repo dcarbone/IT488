@@ -47,27 +47,22 @@ func (v *TaskView) Foreground() fyne.CanvasObject {
 		cancel()
 	}()
 
-	statusButton := newTaskStatusSwitcherButton(v.app.DB(), &v.task)
-	priorityButton := newTaskPrioritySwitcherButton(v.app.DB(), &v.task)
-
 	hdr := container.NewHBox(
 		layout.NewSpacer(),
-		priorityButton,
-		statusButton,
+		newTaskPrioritySwitcherButton(v.app.DB(), &v.task),
+		newTaskStatusSwitcherButton(v.app.DB(), &v.task),
 	)
 
 	body := container.NewVBox(
-		container.NewHBox(widget.NewLabel("List:"), layout.NewSpacer(), widget.NewLabel(func() string {
+		container.NewHBox(FormLabel("List:"), layout.NewSpacer(), widget.NewLabel(func() string {
 			taskList := GetListForTask(ctx, v.app.DB(), v.task)
 			if taskList == nil {
 				return "None"
 			}
 			return taskList.Label
 		}())),
-		container.NewHBox(widget.NewLabel("Due Date:"), layout.NewSpacer(), widget.NewLabel(FormatDateTime(v.task.DueDate))),
-		widget.NewSeparator(),
-		widget.NewSeparator(),
-		widget.NewSeparator(),
+		container.NewHBox(FormLabel("Due Date:"), layout.NewSpacer(), widget.NewLabel(FormatDateTime(v.task.DueDate))),
+		FormLabel("Description:"),
 		container.NewHScroll(
 			widget.NewRichTextFromMarkdown(v.task.Description),
 		),

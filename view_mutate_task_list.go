@@ -68,6 +68,9 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 			labelInput.SetText(s[:50])
 		}
 	}
+	if v.taskList != nil {
+		labelInput.SetText(v.taskList.Label)
+	}
 
 	content.Add(labelInput)
 
@@ -80,6 +83,9 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 			descInput.SetText(s[:500])
 		}
 	}
+	if v.taskList != nil {
+		descInput.SetText(v.taskList.Description)
+	}
 
 	content.Add(descInput)
 
@@ -89,7 +95,7 @@ func (v *MutateTaskListView) render(err error) fyne.CanvasObject {
 		ftr.Add(widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() {
 			res := v.app.DB().Delete(v.taskList)
 			if res.Error != nil {
-				panic(fmt.Sprintf("Error deleting task list %d: %v", v.taskList.ID, err))
+				panic(fmt.Sprintf("Error deleting task list %d: %v", v.taskList.ID, res.Error))
 			}
 			v.app.RenderTaskListsView()
 		}))

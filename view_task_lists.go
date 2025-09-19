@@ -87,6 +87,10 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 		},
 	)
 
+	listView.OnSelected = func(id widget.ListItemID) {
+		v.app.RenderTaskListView(taskLists[id], v.app.RenderTaskListsView)
+	}
+
 	ftr := container.NewBorder(
 		nil,
 		nil,

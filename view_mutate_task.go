@@ -106,7 +106,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	if v.task != nil {
 		chosenStatus = v.task.Status
 	}
-	statusSelectLabel := widget.NewLabel("Status")
+	statusSelectLabel := FormLabel("Status:")
 	statusSelect := widget.NewSelect(TaskStatusTitles, func(s string) {
 		chosenStatus = TaskStatusNumber(s)
 	})
@@ -122,7 +122,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 			GetConstrainedImage(TaskPriorityImage(chosenPriority), 50),
 		),
 	)
-	prioritySelectLabel := widget.NewLabel("Priority")
+	prioritySelectLabel := FormLabel("Priority:")
 	prioritySelect := widget.NewSelect(TaskPriorities, func(s string) {
 		chosenPriority = strings.ToLower(s)
 		chosenPriorityImageContainer.RemoveAll()
