@@ -86,6 +86,7 @@ func (ta *TaskApp) renderView(view View) {
 	ta.contentWrapper.RemoveAll()
 	ta.activeView = view
 	ta.viewTitle.Text = view.Title()
+	ResizeTextToFit(ta.viewTitle, 32, 350)
 	ta.contentWrapper.Add(ta.activeView.Foreground())
 }
 

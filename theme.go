@@ -45,6 +45,15 @@ func (th *TodoTodayTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 	}
 }
 
+func ResizeTextToFit(txt *canvas.Text, baseSize, maxWidth float32) {
+	txt.TextSize = baseSize
+	actual := fyne.MeasureText(txt.Text, txt.TextSize, txt.TextStyle)
+	for actual.Width > maxWidth && txt.TextSize > 8 {
+		txt.TextSize -= 1
+		actual = fyne.MeasureText(txt.Text, txt.TextSize, txt.TextStyle)
+	}
+}
+
 func HeaderCanvas(text string, opts ...func(txt *canvas.Text)) *canvas.Text {
 	txt := canvas.NewText(text, color.Black)
 	txt.Alignment = fyne.TextAlignCenter
@@ -67,54 +76,4 @@ func FormLabel(text string, opts ...func(lbl *widget.Label)) *widget.Label {
 		opt(lbl)
 	}
 	return lbl
-}
-
-var _ fyne.Tappable = (*TappableIcon)(nil)
-
-type TappableIcon struct {
-	*widget.Icon
-
-	act func(ev *fyne.PointEvent)
-}
-
-func NewTappableIcon(rsc fyne.Resource, act func(ev *fyne.PointEvent)) *TappableIcon {
-	ti := TappableIcon{
-		Icon: widget.NewIcon(rsc),
-		act:  act,
-	}
-	ti.ExtendBaseWidget(&ti)
-	return &ti
-}
-
-func (t *TappableIcon) Tapped(ev *fyne.PointEvent) {
-	t.act(ev)
-}
-
-type CyclingTappableIcon struct {
-	*widget.Button
-
-	idx     int
-	choices []fyne.Resource
-	act     func(idx int)
-}
-
-func NewCyclingTappableIcon(first int, choices []fyne.Resource, act func(idx int)) *CyclingTappableIcon {
-	i := &CyclingTappableIcon{
-		idx:     first,
-		choices: choices,
-		act:     act,
-	}
-	i.Button = widget.NewButtonWithIcon("", choices[first], i.onClick)
-	i.ExtendBaseWidget(i)
-	i.Importance = widget.LowImportance
-	return i
-}
-
-func (i *CyclingTappableIcon) onClick() {
-	i.idx++
-	if i.idx == len(i.choices) {
-		i.idx = 0
-	}
-	i.Button.SetIcon(i.choices[i.idx])
-	i.act(i.idx)
 }
