@@ -68,6 +68,10 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 			content := object.(*fyne.Container)
 
 			content.RemoveAll()
+
+			labelText := canvas.NewText(taskList.Label, color.Black)
+			ResizeTextToFit(labelText, 14, 275)
+
 			content.Add(container.NewBorder(
 				nil,
 				nil,
@@ -82,7 +86,7 @@ func (v *TaskListsView) Foreground() fyne.CanvasObject {
 						v.app.RenderMutateTaskListView(&taskList)
 					}),
 				),
-				widget.NewLabel(taskList.Label),
+				labelText,
 			))
 		},
 	)

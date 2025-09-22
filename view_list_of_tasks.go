@@ -28,6 +28,10 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 			content := object.(*fyne.Container)
 
 			content.RemoveAll()
+
+			labelText := canvas.NewText(task.Label, color.Black)
+			ResizeTextToFit(labelText, 14, 275)
+
 			content.Add(container.NewBorder(
 				nil,
 				nil,
@@ -44,7 +48,7 @@ func buildListOfTasksList(app *TaskApp, taskList *TaskList, tasks []Task, onDele
 						}
 					}),
 				),
-				widget.NewLabel(task.Label),
+				labelText,
 			))
 		},
 	)

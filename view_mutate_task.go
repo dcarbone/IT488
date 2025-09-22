@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"image/color"
 	"slices"
 	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -71,7 +69,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		listNames = append(listNames, tl.Label)
 	}
 
-	titleLabel := canvas.NewText("Title", color.Black)
+	titleLabel := FormLabel("Title")
 	titleInput := widget.NewEntry()
 	if v.task != nil {
 		titleInput.SetText(v.task.Label)
@@ -88,7 +86,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 		chosenTaskList = GetListForTask(ctx, v.app.DB(), *v.task)
 	}
 
-	tlSelectLabel := canvas.NewText("Task List", color.Black)
+	tlSelectLabel := FormLabel("Task List")
 	tlSelect := widget.NewSelect(listNames, func(s string) {
 		idx := slices.Index(listNames, s)
 		if idx == -1 {

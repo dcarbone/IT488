@@ -54,14 +54,16 @@ func (v *TaskView) Foreground() fyne.CanvasObject {
 	)
 
 	body := container.NewVBox(
-		container.NewHBox(FormLabel("List:"), layout.NewSpacer(), widget.NewLabel(func() string {
+		FormLabel("List:"),
+		widget.NewLabel(func() string {
 			taskList := GetListForTask(ctx, v.app.DB(), v.task)
 			if taskList == nil {
 				return "None"
 			}
 			return taskList.Label
-		}())),
-		container.NewHBox(FormLabel("Due Date:"), layout.NewSpacer(), widget.NewLabel(FormatDateTime(v.task.DueDate))),
+		}()),
+		FormLabel("Due Date:"),
+		widget.NewLabel(FormatDateTime(v.task.DueDate)),
 		FormLabel("Description:"),
 		container.NewHScroll(
 			widget.NewRichTextFromMarkdown(v.task.Description),

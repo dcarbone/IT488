@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
 )
 
 var (
@@ -67,13 +66,14 @@ func HeaderCanvas(text string, opts ...func(txt *canvas.Text)) *canvas.Text {
 	return txt
 }
 
-func FormLabel(text string, opts ...func(lbl *widget.Label)) *widget.Label {
-	lbl := widget.NewLabel(text)
-	lbl.TextStyle = fyne.TextStyle{
+func FormLabel(text string, opts ...func(txt *canvas.Text)) *canvas.Text {
+	txt := canvas.NewText(text, color.Black)
+	txt.TextStyle = fyne.TextStyle{
 		Bold: true,
 	}
+	ResizeTextToFit(txt, 14, 150)
 	for _, opt := range opts {
-		opt(lbl)
+		opt(txt)
 	}
-	return lbl
+	return txt
 }
