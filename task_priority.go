@@ -14,6 +14,7 @@ import (
 const (
 	TaskPriorityLowest  = "lowest"
 	TaskPriorityLow     = "low"
+	TaskPriorityNeutral = "neutral"
 	TaskPriorityHigh    = "high"
 	TaskPriorityHighest = "highest"
 )
@@ -22,6 +23,7 @@ var (
 	TaskPriorities = []string{
 		strings.ToTitle(TaskPriorityLowest),
 		strings.ToTitle(TaskPriorityLow),
+		strings.ToTitle(TaskPriorityNeutral),
 		strings.ToTitle(TaskPriorityHigh),
 		strings.ToTitle(TaskPriorityHighest),
 	}
@@ -33,6 +35,10 @@ var (
 	TaskPriorityIconResourceLow = EncodeImageToResource(
 		"task_priority_low",
 		GetConstrainedImage(TaskPriorityImage(TaskPriorityLow), 50),
+	)
+	TaskPriorityIconResourceLNeutral = EncodeImageToResource(
+		"task_priority_neutral",
+		GetConstrainedImage(TaskPriorityImage(TaskPriorityNeutral), 50),
 	)
 	TaskPriorityIconResourceHigh = EncodeImageToResource(
 		"task_priority_high",
@@ -50,11 +56,13 @@ func TaskPriorityNumber(priority string) uint {
 		return 0
 	case TaskPriorityLow:
 		return 10
+	case TaskPriorityHigh:
+		return 20
 	case TaskPriorityHighest:
 		return 30
 
 	default:
-		return 20
+		return 15
 	}
 }
 
@@ -64,11 +72,13 @@ func TaskPriorityName(priority uint) string {
 		return TaskPriorityLowest
 	case 10:
 		return TaskPriorityLow
+	case 20:
+		return TaskPriorityHigh
 	case 30:
 		return TaskPriorityHighest
 
 	default:
-		return TaskPriorityHigh
+		return TaskPriorityNeutral
 	}
 }
 
@@ -78,11 +88,13 @@ func TaskPriorityImage(priority string) image.Image {
 		return AssetImagePriorityLowest
 	case TaskPriorityLow:
 		return AssetImagePriorityLow
+	case TaskPriorityHigh:
+		return AssetImagePriorityHigh
 	case TaskPriorityHighest:
 		return AssetImagePriorityHighest
 
 	default:
-		return AssetImagePriorityHigh
+		return AssetImagePriorityNeutral
 	}
 }
 
@@ -92,11 +104,13 @@ func TaskPriorityResource(priority string) *fyne.StaticResource {
 		return TaskPriorityIconResourceLowest
 	case TaskPriorityLow:
 		return TaskPriorityIconResourceLow
+	case TaskPriorityHigh:
+		return TaskPriorityIconResourceHigh
 	case TaskPriorityHighest:
 		return TaskPriorityIconResourceHighest
 
 	default:
-		return TaskPriorityIconResourceHigh
+		return TaskPriorityIconResourceLNeutral
 	}
 }
 

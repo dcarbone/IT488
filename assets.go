@@ -26,6 +26,7 @@ var (
 
 	AssetImagePriorityLowest  = MustGetAssetImage("lowest_priority.png")
 	AssetImagePriorityLow     = MustGetAssetImage("low_priority.png")
+	AssetImagePriorityNeutral = MustGetAssetImage("neutral_priority.png")
 	AssetImagePriorityHigh    = MustGetAssetImage("high_priority.png")
 	AssetImagePriorityHighest = MustGetAssetImage("highest_priority.png")
 
