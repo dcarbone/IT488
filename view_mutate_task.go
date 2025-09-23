@@ -82,7 +82,7 @@ func (v *MutateTaskView) Foreground() fyne.CanvasObject {
 	titleInput.PlaceHolder = "Task Title"
 
 	chosenTaskList := v.taskList
-	if chosenTaskList == nil {
+	if chosenTaskList == nil && v.task != nil {
 		chosenTaskList = GetListForTask(ctx, v.app.DB(), *v.task)
 	}
 
