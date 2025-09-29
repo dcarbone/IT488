@@ -28,8 +28,8 @@ func NewHomeView(app *TaskApp) *HomeView {
 	return &v
 }
 
-func (v *HomeView) Title() string {
-	return ""
+func (v *HomeView) Title() []fyne.CanvasObject {
+	return nil
 }
 
 func (v *HomeView) Foreground() fyne.CanvasObject {

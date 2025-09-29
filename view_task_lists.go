@@ -26,8 +26,8 @@ func NewTaskListsView(ta *TaskApp) *TaskListsView {
 	return &v
 }
 
-func (v *TaskListsView) Title() string {
-	return "Task lists"
+func (v *TaskListsView) Title() []fyne.CanvasObject {
+	return []fyne.CanvasObject{HeaderCanvas("Task Lists")}
 }
 
 func (v *TaskListsView) Foreground() fyne.CanvasObject {

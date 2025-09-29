@@ -29,11 +29,15 @@ func NewMutateTaskListView(app *TaskApp, taskList *TaskList) *MutateTaskListView
 	return &v
 }
 
-func (v *MutateTaskListView) Title() string {
+func (v *MutateTaskListView) Title() []fyne.CanvasObject {
+	var title *canvas.Text
 	if v.taskList == nil {
-		return "Create task list"
+		title = HeaderCanvas("Create task list")
+	} else {
+		title = HeaderCanvas(fmt.Sprintf("Edit %s", v.taskList.Label))
 	}
-	return fmt.Sprintf("Edit task list %s", v.taskList.Label)
+	ResizeTextToFit(title, 32, 350)
+	return []fyne.CanvasObject{title}
 }
 
 func (v *MutateTaskListView) Foreground() fyne.CanvasObject {

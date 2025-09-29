@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -37,11 +38,15 @@ func NewMutateTaskView(app *TaskApp, task *Task, taskList *TaskList, onDelete fu
 	return &v
 }
 
-func (v *MutateTaskView) Title() string {
+func (v *MutateTaskView) Title() []fyne.CanvasObject {
+	var title *canvas.Text
 	if v.task == nil {
-		return "Create new task"
+		title = HeaderCanvas("Create new task")
+	} else {
+		title = HeaderCanvas(fmt.Sprintf("Edit: %s", v.task.Label))
 	}
-	return fmt.Sprintf("Edit task %s", v.task.Label)
+	ResizeTextToFit(title, 32, 350)
+	return []fyne.CanvasObject{title}
 }
 
 func (v *MutateTaskView) Foreground() fyne.CanvasObject {

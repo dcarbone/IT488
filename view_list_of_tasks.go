@@ -79,8 +79,10 @@ func NewListOfTasksView(app *TaskApp, title string, taskList *TaskList, opts ...
 	return &v
 }
 
-func (v *ListOfTasksView) Title() string {
-	return v.title
+func (v *ListOfTasksView) Title() []fyne.CanvasObject {
+	title := HeaderCanvas(v.title)
+	ResizeTextToFit(title, 32, 350)
+	return []fyne.CanvasObject{title}
 }
 
 func (v *ListOfTasksView) Foreground() fyne.CanvasObject {

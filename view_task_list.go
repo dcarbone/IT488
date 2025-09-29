@@ -28,8 +28,10 @@ func NewTaskListView(ta *TaskApp, taskList TaskList, onDelete func()) *TaskListV
 	return &v
 }
 
-func (v *TaskListView) Title() string {
-	return v.taskList.Label
+func (v *TaskListView) Title() []fyne.CanvasObject {
+	title := HeaderCanvas(v.taskList.Label)
+	ResizeTextToFit(title, 32, 350)
+	return []fyne.CanvasObject{title}
 }
 
 func (v *TaskListView) Foreground() fyne.CanvasObject {
