@@ -69,19 +69,16 @@ func (v *NavigationView) Foreground() fyne.CanvasObject {
 				widget.NewButton("Today's Tasks", func() {
 					v.app.RenderListOfTasksView("Today's Tasks", nil, todaysTasksModelQueryOpt())
 				}),
-				widget.NewButton("All Tasks", func() {
-					v.app.RenderListOfTasksView("All Tasks", nil)
-				}),
 				widget.NewButton("Todo Tasks", func() {
 					v.app.RenderListOfTasksView("Todo Tasks", nil, func(db *gorm.DB) *gorm.DB {
 						return WithSort("due_date asc")(WithSort("id asc")(WithPreload("TaskList")(db))).
-							Where("Status = ?", TaskStatusTodo)
+							Where("Status ", TaskStatusTodo)
 					})
 				}),
 				widget.NewButton("Done Tasks", func() {
 					v.app.RenderListOfTasksView("Done Tasks", nil, func(db *gorm.DB) *gorm.DB {
 						return WithSort("due_date asc")(WithSort("id asc")(WithPreload("TaskList")(db))).
-							Where("Status = ?", TaskStatusDone)
+							Where("Status in ?", []uint{TaskStatusSkip, TaskStatusDone})
 					})
 				}),
 
