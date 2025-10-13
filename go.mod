@@ -8,7 +8,7 @@ require (
 	fyne.io/fyne/v2 v2.6.3
 	github.com/glebarez/sqlite v1.11.0
 	github.com/sdassow/fyne-datepicker v0.0.0-20250403132905-bf906d02ba0c
-	golang.org/x/image v0.31.0
+	golang.org/x/image v0.32.0
 	gorm.io/gorm v1.31.0
 )
 
@@ -51,7 +51,7 @@ require (
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.66.9 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
